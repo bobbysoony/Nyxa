@@ -1,2 +1,2 @@
 # Nyxa
-A manga/manhwa/novel reading site
+A reading app for novels, manga, manhwa and books, available for Android and Windows
