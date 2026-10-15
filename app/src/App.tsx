@@ -52,7 +52,6 @@ function App() {
       </form>
       <p>{greetMsg}</p>
 
-
       <form
         className="row"
         onSubmit={(e) => {
