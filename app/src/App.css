@@ -97,8 +97,8 @@ button {
 
 @media (prefers-color-scheme: dark) {
   :root {
-    color: #f6f6f6;
-    background-color: #2f2f2f;
+    color: #000000;
+    background-color: #3a3939;
   }
 
   a:hover {
@@ -108,10 +108,10 @@ button {
   input,
   button {
     color: #ffffff;
-    background-color: #0f0f0f98;
+    background-color: #8d8d8d98;
   }
   button:active {
-    background-color: #0f0f0f69;
+    background-color: #b1b1b169;
   }
 }
 

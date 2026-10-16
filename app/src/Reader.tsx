@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "../foliate-js/view.js";
 
 // Most books give their title as text, but some give a set of
@@ -28,10 +28,27 @@ function Reader() {
       setProgress(Math.round((e.detail.fraction ?? 0) * 100));
     });
 
+    view.addEventListener("load", (e: any) => {
+      e.detail.doc.addEventListener("keydown", handleKeyDown);
+    });
+
     await view.open(file);
     setTitle(getTitle(view.book.metadata?.title) || file.name);
     await view.init({ showTextStart: true });
   }
+
+  function handleKeyDown(e: KeyboardEvent) {
+    if (e.key === "ArrowLeft") {
+      viewRef.current?.prev();
+    } else if (e.key === "ArrowRight") {
+      viewRef.current?.next();
+    }
+  }
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   return (
     <div className="reader">
