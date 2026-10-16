@@ -114,3 +114,28 @@ button {
     background-color: #0f0f0f69;
   }
 }
+
+.reader {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.reader-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+}
+
+.reader-page {
+  flex: 1;
+  min-height: 0;
+}
+
+.reader-page foliate-view {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
