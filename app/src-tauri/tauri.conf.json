@@ -19,17 +19,19 @@
     ],
     "security": {
       "csp": {
-      "default-src": "'self' ipc: http://ipc.localhost",
-     "script-src": "'self'",
-     "style-src": "'self' 'unsafe-inline' blob:",
-     "img-src": "'self' blob: data:",
-     "font-src": "'self' blob: data:",
-      "media-src": "'self' blob:",
-     "frame-src": "blob:",
-     "connect-src": "'self' ipc: http://ipc.localhost blob:"
-  },
-  "dangerousDisableAssetCspModification": ["style-src"]
-}
+        "default-src": "'self' ipc: http://ipc.localhost",
+        "script-src": "'self'",
+        "style-src": "'self' 'unsafe-inline' blob:",
+        "img-src": "'self' blob: data:",
+        "font-src": "'self' blob: data:",
+        "media-src": "'self' blob:",
+        "frame-src": "blob:",
+        "connect-src": "'self' ipc: http://ipc.localhost blob:"
+      },
+      "dangerousDisableAssetCspModification": [
+        "style-src"
+      ]
+    }
   },
   "bundle": {
     "active": true,

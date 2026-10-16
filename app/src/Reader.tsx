@@ -16,6 +16,16 @@ function Reader() {
   const [chapter, setChapter] = useState("");
   const [progress, setProgress] = useState(0);
 
+  function handleKey(e: KeyboardEvent) {
+    if (e.key === "ArrowRight") viewRef.current?.goRight();
+    if (e.key === "ArrowLeft") viewRef.current?.goLeft();
+  }
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, []);
+
   async function openBook(file: File) {
     viewRef.current?.remove();
 
@@ -29,26 +39,14 @@ function Reader() {
     });
 
     view.addEventListener("load", (e: any) => {
-      e.detail.doc.addEventListener("keydown", handleKeyDown);
+      e.detail.doc.addEventListener("keydown", handleKey);
     });
 
     await view.open(file);
+    view.renderer.setStyles?.("html { background: #15151c; color: #d8d8e0; }");
     setTitle(getTitle(view.book.metadata?.title) || file.name);
     await view.init({ showTextStart: true });
   }
-
-  function handleKeyDown(e: KeyboardEvent) {
-    if (e.key === "ArrowLeft") {
-      viewRef.current?.prev();
-    } else if (e.key === "ArrowRight") {
-      viewRef.current?.next();
-    }
-  }
-
-  useEffect(() => {
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
 
   return (
     <div className="reader">
