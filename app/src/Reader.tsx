@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import {open} from "@tauri-apps/plugin-dialog";
+import { readFile } from "@tauri-apps/plugin-fs";
 import "../foliate-js/view.js";
 
 // Most books give their title as text, but some give a set of
@@ -26,6 +28,17 @@ function Reader() {
     return () => window.removeEventListener("keydown", handleKey);
   }, []);
 
+  async function pickBook(){
+    const path =  await open({
+      filters:[{name: "EPUB books", extensions:["epub"]}]
+    });
+    if (!path) return;
+
+    const bytes = await readFile(path);
+    const name = path.split(/[\\/]/).pop() ?? "book.epub";
+    await openBook(new File([bytes], name));
+  }
+
   async function openBook(file: File) {
     viewRef.current?.remove();
 
@@ -51,14 +64,10 @@ function Reader() {
   return (
     <div className="reader">
       <div className="reader-bar">
-        <input
-          type="file"
-          accept=".epub"
-          onChange={(e) => {
-            const file = e.currentTarget.files?.[0];
-            if (file) openBook(file);
-          }}
-        />
+        <button
+          onClick={pickBook}>
+          📖 Open Book
+          </button>
         <span>{title}</span>
       </div>
 
