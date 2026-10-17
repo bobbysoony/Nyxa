@@ -43,7 +43,7 @@ function Reader() {
     });
 
     await view.open(file);
-    view.renderer.setStyles?.("html { background: #15151c; color: #d8d8e0; }");
+    view.renderer.setStyles?.("html, body { background: #15151c !important; color: #d8d8e0 !important; } body * { color: inherit !important; }");
     setTitle(getTitle(view.book.metadata?.title) || file.name);
     await view.init({ showTextStart: true });
   }
