@@ -5,7 +5,7 @@ import { load } from "@tauri-apps/plugin-store";
 import "../foliate-js/view.js";
 
 // Most books give their title as text, but some give a set of
-// translations instead, like { ja: "シャドウ・スレイブ" }. Handle both.
+// translations, this hanldes both.
 function getTitle(title: string | Record<string, string> | undefined) {
   if (!title) return "";
   if (typeof title === "string") return title;
