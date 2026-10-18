@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import {open} from "@tauri-apps/plugin-dialog";
-import { readFile } from "@tauri-apps/plugin-fs";
+import { open } from "@tauri-apps/plugin-dialog";
+import { BaseDirectory, mkdir, readFile, writeFile } from "@tauri-apps/plugin-fs";
+import { load } from "@tauri-apps/plugin-store";                                  
 import "../foliate-js/view.js";
 
 // Most books give their title as text, but some give a set of
@@ -14,6 +15,7 @@ function getTitle(title: string | Record<string, string> | undefined) {
 function Reader() {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<any>(null);
+  const bookFileRef = useRef("");
   const [title, setTitle] = useState("");
   const [chapter, setChapter] = useState("");
   const [progress, setProgress] = useState(0);
@@ -28,23 +30,33 @@ function Reader() {
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, []);
-  
 
-  async function pickBook(){
-    try{
+
+  async function pickBook() {
+    try {
       setError("");
-      const path =  await open({
-      filters:[{name: "EPUB books", extensions:["epub"]}]
-    });
-    if (!path) return;
+      const path = await open({
+        filters: [{ name: "EPUB books", extensions: ["epub"] }]
+      });
+      if (!path) return;
 
-    const bytes = await readFile(path);
-    const name = path.split(/[\\/]/).pop() ?? "book.epub";
-    await openBook(new File([bytes], name));
+      const bytes = await readFile(path);
+      const fileName = `books/${Date.now()}.epub`;
+      await mkdir("books", { baseDir: BaseDirectory.AppData, recursive: true });
+      await writeFile(fileName, bytes, { baseDir: BaseDirectory.AppData });
+
+      bookFileRef.current = fileName;
+      await openBook(new File([bytes], fileName));
+
     } catch (err) {
       setError("Failed to open book");
       console.error(err);
     }
+  }
+
+  async function savePosition(position: string){
+    const store = await load("nyxa.json");
+    await store.set("lastBook", {file: bookFileRef.current, position});
   }
 
   async function openBook(file: File) {
@@ -57,6 +69,8 @@ function Reader() {
     view.addEventListener("relocate", (e: any) => {
       setChapter(e.detail.tocItem?.label ?? "");
       setProgress(Math.round((e.detail.fraction ?? 0) * 100));
+      savePosition(e.detail.cfi);
+
     });
 
     view.addEventListener("load", (e: any) => {
@@ -75,7 +89,7 @@ function Reader() {
         <button
           onClick={pickBook}>
           📖 Open Book
-          </button>
+        </button>
         <span>{title}</span>
         <span>{error}</span>
       </div>
