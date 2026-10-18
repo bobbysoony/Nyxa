@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { BaseDirectory, exists, mkdir, readFile, writeFile } from "@tauri-apps/plugin-fs";
-import { load } from "@tauri-apps/plugin-store";                                  
+import { load } from "@tauri-apps/plugin-store";
 import "../foliate-js/view.js";
 
 // Most books give their title as text, but some give a set of
@@ -26,7 +26,7 @@ function Reader() {
   const [chapter, setChapter] = useState("");
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
-  const [welcome, setWelcome] = useState("Welcome to the Nyxa! Picking up where you left off...");
+  const [welcome, setWelcome] = useState("");
 
   function handleKey(e: KeyboardEvent) {
     if (e.key === "ArrowRight") viewRef.current?.goRight();
@@ -43,7 +43,6 @@ function Reader() {
     startedRef.current = true;
     reopenLastBook();
   }, []);
-
 
   async function pickBook() {
     try {
@@ -67,23 +66,24 @@ function Reader() {
     }
   }
 
-  async function savePosition(position: string){
+  async function savePosition(position: string) {
     const store = await load("nyxa.json");
-    await store.set("lastBook", {file: bookFileRef.current, position});
+    await store.set("lastBook", { file: bookFileRef.current, position });
   }
 
-  async function reopenLastBook(){
+  async function reopenLastBook() {
     try {
       const store = await load("nyxa.json");
       const saved = await store.get<SavedBook>("lastBook");
       if (!saved) return;
 
-      const stillThere = await exists(saved.file, {baseDir: BaseDirectory.AppData});
+      const stillThere = await exists(saved.file, { baseDir: BaseDirectory.AppData });
       if (!stillThere) return;
 
-      const epubContent = await readFile(saved.file, {baseDir: BaseDirectory.AppData});
+      const epubContent = await readFile(saved.file, { baseDir: BaseDirectory.AppData });
       bookFileRef.current = saved.file;
       await openBook(new File([epubContent], saved.file), saved.position);
+      setWelcome("Welcome back! Picking up where you left off.");
       setTimeout(() => setWelcome(""), 3000);
     } catch (err) {
       setError("Failed to reopen last book");
@@ -102,7 +102,6 @@ function Reader() {
       setChapter(e.detail.tocItem?.label ?? "");
       setProgress(Math.round((e.detail.fraction ?? 0) * 100));
       savePosition(e.detail.cfi);
-
     });
 
     view.addEventListener("load", (e: any) => {
@@ -112,11 +111,11 @@ function Reader() {
     await view.open(file);
     view.renderer.setStyles?.("html, body { background: #15151c !important; color: #d8d8e0 !important; } body * { color: inherit !important; }");
     setTitle(getTitle(view.book.metadata?.title) || file.name);
-    
+
     if (position) {
-      await view.init({lastLocation: position});
-    }else{
-      await view.init({showTextStart: true});
+      await view.init({ lastLocation: position });
+    } else {
+      await view.init({ showTextStart: true });
     }
   }
 
