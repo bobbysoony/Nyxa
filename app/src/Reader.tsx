@@ -17,6 +17,7 @@ function Reader() {
   const [title, setTitle] = useState("");
   const [chapter, setChapter] = useState("");
   const [progress, setProgress] = useState(0);
+  const [error, setError] = useState("");
 
   function handleKey(e: KeyboardEvent) {
     if (e.key === "ArrowRight") viewRef.current?.goRight();
@@ -27,9 +28,12 @@ function Reader() {
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, []);
+  
 
   async function pickBook(){
-    const path =  await open({
+    try{
+      setError("");
+      const path =  await open({
       filters:[{name: "EPUB books", extensions:["epub"]}]
     });
     if (!path) return;
@@ -37,6 +41,10 @@ function Reader() {
     const bytes = await readFile(path);
     const name = path.split(/[\\/]/).pop() ?? "book.epub";
     await openBook(new File([bytes], name));
+    } catch (err) {
+      setError("Failed to open book");
+      console.error(err);
+    }
   }
 
   async function openBook(file: File) {
@@ -69,6 +77,7 @@ function Reader() {
           📖 Open Book
           </button>
         <span>{title}</span>
+        <span>{error}</span>
       </div>
 
       <div className="reader-page" ref={containerRef}></div>
