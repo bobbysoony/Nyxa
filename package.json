@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "store": "^2.0.12",
+    "tauri": "^0.15.0"
+  }
+}

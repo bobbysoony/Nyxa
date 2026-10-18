@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
-import { BaseDirectory, mkdir, readFile, writeFile } from "@tauri-apps/plugin-fs";
+import { BaseDirectory, exists, mkdir, readFile, writeFile } from "@tauri-apps/plugin-fs";
 import { load } from "@tauri-apps/plugin-store";                                  
 import "../foliate-js/view.js";
 
@@ -12,10 +12,16 @@ function getTitle(title: string | Record<string, string> | undefined) {
   return Object.values(title)[0] ?? "";
 }
 
+type SavedBook = {
+  file: string;
+  position: string;
+};
+
 function Reader() {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<any>(null);
   const bookFileRef = useRef("");
+  const startedRef = useRef(false);
   const [title, setTitle] = useState("");
   const [chapter, setChapter] = useState("");
   const [progress, setProgress] = useState(0);
@@ -31,6 +37,12 @@ function Reader() {
     return () => window.removeEventListener("keydown", handleKey);
   }, []);
 
+  useEffect(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
+    reopenLastBook();
+  }, []);
+
 
   async function pickBook() {
     try {
@@ -40,13 +52,13 @@ function Reader() {
       });
       if (!path) return;
 
-      const bytes = await readFile(path);
+      const epubContent = await readFile(path);
       const fileName = `books/${Date.now()}.epub`;
       await mkdir("books", { baseDir: BaseDirectory.AppData, recursive: true });
-      await writeFile(fileName, bytes, { baseDir: BaseDirectory.AppData });
+      await writeFile(fileName, epubContent, { baseDir: BaseDirectory.AppData });
 
       bookFileRef.current = fileName;
-      await openBook(new File([bytes], fileName));
+      await openBook(new File([epubContent], fileName));
 
     } catch (err) {
       setError("Failed to open book");
@@ -59,7 +71,25 @@ function Reader() {
     await store.set("lastBook", {file: bookFileRef.current, position});
   }
 
-  async function openBook(file: File) {
+  async function reopenLastBook(){
+    try {
+      const store = await load("nyxa.json");
+      const saved = await store.get<SavedBook>("lastBook");
+      if (!saved) return;
+
+      const stillThere = await exists(saved.file, {baseDir: BaseDirectory.AppData});
+      if (!stillThere) return;
+
+      const epubContent = await readFile(saved.file, {baseDir: BaseDirectory.AppData});
+      bookFileRef.current = saved.file;
+      await openBook(new File([epubContent], saved.file), saved.position);
+    } catch (err) {
+      setError("Failed to reopen last book");
+      console.error(err);
+    }
+  }
+
+  async function openBook(file: File, position?: string) {
     viewRef.current?.remove();
 
     const view = document.createElement("foliate-view") as any;
@@ -80,7 +110,12 @@ function Reader() {
     await view.open(file);
     view.renderer.setStyles?.("html, body { background: #15151c !important; color: #d8d8e0 !important; } body * { color: inherit !important; }");
     setTitle(getTitle(view.book.metadata?.title) || file.name);
-    await view.init({ showTextStart: true });
+    
+    if (position) {
+      await view.init({lastLocation: position});
+    }else{
+      await view.init({showTextStart: true});
+    }
   }
 
   return (
