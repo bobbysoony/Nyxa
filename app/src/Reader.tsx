@@ -5,7 +5,7 @@ import { load } from "@tauri-apps/plugin-store";
 import "../foliate-js/view.js";
 
 // Most books give their title as text, but some give a set of
-// translations, this hanldes both.
+// translations, this handles both.
 function getTitle(title: string | Record<string, string> | undefined) {
   if (!title) return "";
   if (typeof title === "string") return title;
@@ -26,6 +26,7 @@ function Reader() {
   const [chapter, setChapter] = useState("");
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
+  const [welcome, setWelcome] = useState("Welcome to the Nyxa! Picking up where you left off...");
 
   function handleKey(e: KeyboardEvent) {
     if (e.key === "ArrowRight") viewRef.current?.goRight();
@@ -83,6 +84,7 @@ function Reader() {
       const epubContent = await readFile(saved.file, {baseDir: BaseDirectory.AppData});
       bookFileRef.current = saved.file;
       await openBook(new File([epubContent], saved.file), saved.position);
+      setTimeout(() => setWelcome(""), 3000);
     } catch (err) {
       setError("Failed to reopen last book");
       console.error(err);
@@ -127,6 +129,7 @@ function Reader() {
         </button>
         <span>{title}</span>
         <span>{error}</span>
+        <span>{welcome}</span>
       </div>
 
       <div className="reader-page" ref={containerRef}></div>
