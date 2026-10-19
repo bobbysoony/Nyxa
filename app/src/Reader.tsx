@@ -3,6 +3,8 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { BaseDirectory, exists, mkdir, readFile, writeFile } from "@tauri-apps/plugin-fs";
 import { load } from "@tauri-apps/plugin-store";
 import "../foliate-js/view.js";
+import SettingsPanel from "./SettingsPanel";
+import {makeBookCSS, Settings} from "./settings";
 
 // Most books give their title as text, but some give a set of
 // translations, this handles both.
@@ -17,7 +19,12 @@ type SavedBook = {
   position: string;
 };
 
-function Reader() {
+type ReaderProps = {
+  settings: Settings;
+  onSettingsChange: (newSettings: Settings) => void;
+};
+
+function Reader({ settings, onSettingsChange }: ReaderProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<any>(null);
   const bookFileRef = useRef("");
@@ -27,6 +34,7 @@ function Reader() {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
   const [welcome, setWelcome] = useState("");
+  const [showSettings, setShowSettings] = useState(false);
 
   function handleKey(e: KeyboardEvent) {
     if (e.key === "ArrowRight") viewRef.current?.goRight();
@@ -43,6 +51,17 @@ function Reader() {
     startedRef.current = true;
     reopenLastBook();
   }, []);
+
+  useEffect(() => {
+    applySettings();
+  }, [settings]);
+
+  function applySettings() {
+    const view = viewRef.current;
+    if (!view?.renderer) return;
+    view.renderer.setStyles?.(makeBookCSS(settings));
+    view.renderer.setAttribute("gap", `${settings.margin}%`);
+  }
 
   async function pickBook() {
     try {
@@ -109,7 +128,7 @@ function Reader() {
     });
 
     await view.open(file);
-    view.renderer.setStyles?.("html, body { background: #15151c !important; color: #d8d8e0 !important; } body * { color: inherit !important; }");
+    applySettings();
     setTitle(getTitle(view.book.metadata?.title) || file.name);
 
     if (position) {
@@ -129,6 +148,10 @@ function Reader() {
         <span>{title}</span>
         <span>{error}</span>
         <span>{welcome}</span>
+        <button onClick={() => setShowSettings(!showSettings)}>Aa</button>
+        {showSettings && (
+          <SettingsPanel settings={settings} onChange={onSettingsChange} />
+        )}
       </div>
 
       <div className="reader-page" ref={containerRef}></div>
