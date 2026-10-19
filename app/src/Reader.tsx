@@ -4,7 +4,7 @@ import { BaseDirectory, exists, mkdir, readFile, writeFile } from "@tauri-apps/p
 import { load } from "@tauri-apps/plugin-store";
 import "../foliate-js/view.js";
 import SettingsPanel from "./SettingsPanel";
-import {makeBookCSS, Settings} from "./settings";
+import { makeBookCSS, Settings } from "./settings";
 
 // Most books give their title as text, but some give a set of
 // translations, this handles both.
@@ -56,7 +56,6 @@ function Reader({ settings, onSettingsChange }: ReaderProps) {
   useEffect(() => {
     applySettings();
   }, [settings]);
-
 
   function applySettings() {
     const view = viewRef.current;
@@ -143,10 +142,7 @@ function Reader({ settings, onSettingsChange }: ReaderProps) {
   return (
     <div className="reader">
       <div className="reader-bar">
-        <button
-          onClick={pickBook}>
-          📖 Open Book
-        </button>
+        <button onClick={pickBook}>📖 Open book</button>
         <span>{title}</span>
         <span>{error}</span>
         <span>{welcome}</span>
