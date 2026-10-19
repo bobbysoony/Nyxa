@@ -1,4 +1,4 @@
-import { Settings } from "./settings";
+import { defaultSettings, Settings } from "./settings";
 
 type SettingsPanelProps = {
     settings: Settings;
@@ -8,6 +8,7 @@ type SettingsPanelProps = {
 function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
     return (
         <div className="settings-panel">
+
             <label>
                 Text Size: {settings.fontSize}px
                 <input
@@ -55,6 +56,10 @@ function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
                     <option value="system-ui, sans-serif">Sans-serif</option>
                 </select>
             </label>
+            <button
+                onClick={() => onChange(defaultSettings)}>
+                Reset Settings
+            </button>
         </div>
     );
 }

@@ -39,6 +39,7 @@ function Reader({ settings, onSettingsChange }: ReaderProps) {
   function handleKey(e: KeyboardEvent) {
     if (e.key === "ArrowRight") viewRef.current?.goRight();
     if (e.key === "ArrowLeft") viewRef.current?.goLeft();
+    if (e.key === "Escape") setShowSettings(false);
   }
 
   useEffect(() => {
@@ -55,6 +56,7 @@ function Reader({ settings, onSettingsChange }: ReaderProps) {
   useEffect(() => {
     applySettings();
   }, [settings]);
+
 
   function applySettings() {
     const view = viewRef.current;
