@@ -6,7 +6,7 @@ export type Settings = {
   lineHeight: number;
   margin: number;
   theme: string;
-  flow: string;
+  readingMode: string;
 };
 
 // What Nyxa uses until you change something.
@@ -16,7 +16,7 @@ export const defaultSettings: Settings = {
   lineHeight: 1.5,
   margin: 7,
   theme: "night",
-  flow: "paginated"
+  readingMode: "paginated"
 };
 
 type Theme = {
@@ -28,6 +28,7 @@ export const themes: Record<string, Theme> = {
   night: { background: "#15151c", text: "#d8d8e0" },
   sepia: { background: "#f4ecd8", text: "#5b4636" },
   light: { background: "#ffffff", text: "#1f1f24" },
+  contrast: { background: "#000000", text: "#ffffff" }
 };
 
 export function getTheme(name: string){

@@ -6,24 +6,53 @@ type SettingsPanelProps = {
 };
 
 function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
+  const scrolled = settings.readingMode === "scrolled";
+
   return (
     <div className="settings-panel">
       <div className="theme-buttons">
-        <button onClick={() => onChange({ ...settings, theme: "night" })}>Night</button>
-        <button onClick={() => onChange({ ...settings, theme: "sepia" })}>Sepia</button>
-        <button onClick={() => onChange({ ...settings, theme: "light" })}>Light</button>
-      </div>
-      
-      <label>
-        Reading mode
-        <select
-          value={settings.flow}
-          onChange={(e) => onChange({ ...settings, flow: e.target.value })}
+        <button
+          disabled={settings.theme === "night"}
+          onClick={() => onChange({ ...settings, theme: "night" })}
         >
-          <option value="paginated">Turn pages</option>
-          <option value="scrolled">Scroll</option>
-        </select>
-      </label>
+          Night
+        </button>
+        <button
+          disabled={settings.theme === "sepia"}
+          onClick={() => onChange({ ...settings, theme: "sepia" })}
+        >
+          Sepia
+        </button>
+        <button
+          disabled={settings.theme === "light"}
+          onClick={() => onChange({ ...settings, theme: "light" })}
+        >
+          Light
+        </button>
+        <button
+          disabled={settings.theme === "contrast"}
+          onClick={() => onChange({ ...settings, theme: "contrast" })}
+        >
+          Contrast
+        </button>
+      </div>
+
+      <button
+        className="toggle"
+        aria-pressed={scrolled}
+        onClick={() =>
+          onChange({ ...settings, readingMode: scrolled ? "paginated" : "scrolled" })
+        }
+      >
+        Scroll
+        <span className="tick">
+          {scrolled && (
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M3 8.5 L6.5 12 L13 4.5" />
+            </svg>
+          )}
+        </span>
+      </button>
 
       <label>
         Text size: {settings.fontSize}px

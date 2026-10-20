@@ -160,3 +160,29 @@ body {
   flex-wrap: wrap;
   gap: 8px;
 }
+
+.theme-buttons button:disabled {
+  outline: 2px solid var(--text);
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tick {
+  display: flex;
+  width: 16px;
+  height: 16px;
+}
+
+.tick svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

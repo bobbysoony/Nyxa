@@ -62,6 +62,7 @@ function Reader({ settings, onSettingsChange }: ReaderProps) {
     if (!view?.renderer) return;
     view.renderer.setStyles?.(makeBookCSS(settings));
     view.renderer.setAttribute("gap", `${settings.margin}%`);
+    view.renderer.setAttribute("flow", settings.readingMode);
   }
 
   async function pickBook() {
