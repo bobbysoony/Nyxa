@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { load } from "@tauri-apps/plugin-store";
 import Reader from "./Reader";
-import { defaultSettings, Settings } from "./settings";
+import { defaultSettings, Settings, getTheme} from "./settings";
 import "./App.css";
 
 function App() {
@@ -10,6 +10,13 @@ function App() {
   useEffect(() => {
     loadSettings();
   }, []);
+
+  useEffect(() => {
+    if (!settings) return;
+    const theme = getTheme(settings.theme);
+    document.documentElement.style.setProperty("--page", theme.background);
+    document.documentElement.style.setProperty("--text", theme.text);
+  }, [settings]); 
 
   async function loadSettings() {
     const store = await load("nyxa.json");

@@ -8,6 +8,23 @@ type SettingsPanelProps = {
 function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
   return (
     <div className="settings-panel">
+      <div className="theme-buttons">
+        <button onClick={() => onChange({ ...settings, theme: "night" })}>Night</button>
+        <button onClick={() => onChange({ ...settings, theme: "sepia" })}>Sepia</button>
+        <button onClick={() => onChange({ ...settings, theme: "light" })}>Light</button>
+      </div>
+      
+      <label>
+        Reading mode
+        <select
+          value={settings.flow}
+          onChange={(e) => onChange({ ...settings, flow: e.target.value })}
+        >
+          <option value="paginated">Turn pages</option>
+          <option value="scrolled">Scroll</option>
+        </select>
+      </label>
+
       <label>
         Text size: {settings.fontSize}px
         <input
