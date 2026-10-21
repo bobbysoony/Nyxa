@@ -3,13 +3,14 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-    "scripts": {
+  "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
     "cable": "%LOCALAPPDATA%\\Android\\Sdk\\platform-tools\\adb.exe reverse tcp:1420 tcp:1420 && %LOCALAPPDATA%\\Android\\Sdk\\platform-tools\\adb.exe reverse tcp:1421 tcp:1421",
-    "phone": "npm run cable && tauri android dev --host 127.0.0.1"
+    "phone": "npm run cable && tauri android dev --host 127.0.0.1",
+    "test": "vitest run"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
@@ -26,6 +27,7 @@
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^6.0.2",
     "typescript": "~6.0.3",
-    "vite": "^8.0.16"
+    "vite": "^8.0.16",
+    "vitest": "^5.0.5"
   }
 }

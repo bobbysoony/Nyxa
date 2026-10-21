@@ -5,14 +5,8 @@ import { load } from "@tauri-apps/plugin-store";
 import "../foliate-js/view.js";
 import SettingsPanel from "./SettingsPanel";
 import { makeBookCSS, Settings } from "./settings";
+import {getTitle} from "./getTitle";
 
-// Most books give their title as text, but some give a set of
-// translations, this handles both.
-function getTitle(title: string | Record<string, string> | undefined) {
-  if (!title) return "";
-  if (typeof title === "string") return title;
-  return Object.values(title)[0] ?? "";
-}
 
 type SavedBook = {
   file: string;
