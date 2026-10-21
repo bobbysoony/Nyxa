@@ -3,5 +3,5 @@
 export function getTitle(title: string | Record<string, string> | undefined) {
   if (!title) return "";
   if (typeof title === "string") return title;
-  return Object.values(title)[0] ?? "";
+  return "";
 }
