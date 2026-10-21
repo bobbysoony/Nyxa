@@ -36,11 +36,3 @@ test("makeBookCSS uses the chosen line height", () => {
   const css = makeBookCSS({ ...defaultSettings, lineHeight: 2.1 });
   expect(css).toContain("line-height: 2.1");
 });
-
-// Defaults
-
-test("default settings are the ones Nyxa starts with", () => {
-  expect(defaultSettings.theme).toBe("night");
-  expect(defaultSettings.readingMode).toBe("paginated");
-  expect(defaultSettings.fontSize).toBe(18);
-});

@@ -5,8 +5,7 @@ import { load } from "@tauri-apps/plugin-store";
 import "../foliate-js/view.js";
 import SettingsPanel from "./SettingsPanel";
 import { makeBookCSS, Settings } from "./settings";
-import {getTitle} from "./getTitle";
-
+import { getTitle } from "./getTitle";
 
 type SavedBook = {
   file: string;
