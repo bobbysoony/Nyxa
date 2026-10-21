@@ -186,3 +186,11 @@ body {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+  background-color: rgba(0, 0, 0, 0.5);
+
+}

@@ -149,6 +149,9 @@ function Reader({ settings, onSettingsChange }: ReaderProps) {
         <span>{welcome}</span>
         <button onClick={() => setShowSettings(!showSettings)}>Aa</button>
         {showSettings && (
+          <div className="backdrop" onClick={() => setShowSettings(false)}></div>
+        )}
+        {showSettings && (
           <SettingsPanel settings={settings} onChange={onSettingsChange} />
         )}
       </div>
