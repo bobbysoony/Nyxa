@@ -6,6 +6,8 @@ import "../foliate-js/view.js";
 import SettingsPanel from "./SettingsPanel";
 import { makeBookCSS, Settings } from "./settings";
 import { getTitle } from "./getTitle";
+import type { FoliateView } from "./foliate";
+import { tapZone } from "./taps";
 
 type SavedBook = {
   file: string;
@@ -19,7 +21,7 @@ type ReaderProps = {
 
 function Reader({ settings, onSettingsChange }: ReaderProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const viewRef = useRef<any>(null);
+  const viewRef = useRef<FoliateView | null>(null);
   const bookFileRef = useRef("");
   const startedRef = useRef(false);
   const [title, setTitle] = useState("");
@@ -28,11 +30,32 @@ function Reader({ settings, onSettingsChange }: ReaderProps) {
   const [error, setError] = useState("");
   const [welcome, setWelcome] = useState("");
   const [showSettings, setShowSettings] = useState(false);
+  const [barsHidden, setBarsHidden] = useState(false);
+
 
   function handleKey(e: KeyboardEvent) {
     if (e.key === "ArrowRight") viewRef.current?.goRight();
     if (e.key === "ArrowLeft") viewRef.current?.goLeft();
     if (e.key === "Escape") setShowSettings(false);
+  }
+
+  function tapAt(x: number) {
+    const page = containerRef.current?.getBoundingClientRect();
+    if (!page) return;
+    const zone = tapZone(x - page.left, page.width);
+
+    if (zone === "left") viewRef.current?.goLeft();
+    else if (zone === "right") viewRef.current?.goRight();
+    else if (window.matchMedia("(pointer: coarse)").matches) { setBarsHidden((hidden) => !hidden); }
+  }
+
+  function handleBookClick(e: MouseEvent, doc: Document) {
+    const target = e.target as Element;
+    if (target.closest("a")) return;
+    if (!doc.getSelection()?.isCollapsed) return;
+
+    const frame = doc.defaultView?.frameElement;
+    tapAt((frame?.getBoundingClientRect().left ?? 0) + e.clientX);
   }
 
   useEffect(() => {
@@ -108,18 +131,20 @@ function Reader({ settings, onSettingsChange }: ReaderProps) {
   async function openBook(file: File, position?: string) {
     viewRef.current?.remove();
 
-    const view = document.createElement("foliate-view") as any;
+    const view = document.createElement("foliate-view");
     containerRef.current?.append(view);
     viewRef.current = view;
 
-    view.addEventListener("relocate", (e: any) => {
+    view.addEventListener("relocate", (e) => {
       setChapter(e.detail.tocItem?.label ?? "");
       setProgress(Math.round((e.detail.fraction ?? 0) * 100));
       savePosition(e.detail.cfi);
     });
 
-    view.addEventListener("load", (e: any) => {
-      e.detail.doc.addEventListener("keydown", handleKey);
+    view.addEventListener("load", (e) => {
+      const doc = e.detail.doc;
+      doc.addEventListener("keydown", handleKey);
+      doc.addEventListener("click", (ev) => handleBookClick(ev, doc));
     });
 
     await view.open(file);
@@ -134,7 +159,7 @@ function Reader({ settings, onSettingsChange }: ReaderProps) {
   }
 
   return (
-    <div className="reader">
+    <div className={barsHidden ? "reader bars-hidden" : "reader"}>
       <div className="reader-bar">
         <button onClick={pickBook}>📖 Open book</button>
         <span>{title}</span>
@@ -149,7 +174,7 @@ function Reader({ settings, onSettingsChange }: ReaderProps) {
         )}
       </div>
 
-      <div className="reader-page" ref={containerRef}></div>
+      <div className="reader-page" ref={containerRef} onClick={(e) => tapAt(e.clientX)}></div>
 
       <div className="reader-bar">
         <button onClick={() => viewRef.current?.prev()}>◀ Back</button>

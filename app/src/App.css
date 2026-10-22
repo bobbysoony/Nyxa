@@ -193,3 +193,7 @@ body {
   z-index: 9;
   background-color: rgba(0, 0, 0, 0.5);
 }
+
+.reader.bars-hidden .reader-bar {
+  display: none;
+}
