@@ -46,3 +46,69 @@ jobs:
         with:
           path: app/src-tauri/target/release/bundle/nsis/*.exe
           archive: false
+  
+  android:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+
+    steps:
+      - name: Get the code, with foliate-js
+        uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      - name: Install Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install the Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Install the Android NDK
+        run: sdkmanager "ndk;27.2.12479018"
+
+      - name: Install Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Teach Rust to build for phones
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+
+      - name: Reuse the Rust build from last time
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: app/src-tauri
+
+      - name: Install npm packages
+        run: npm ci
+
+      - name: Run the tests
+        run: npm test
+
+      - name: Set up the signing key
+        working-directory: app/src-tauri/gen/android
+        run: |
+          echo "${{ secrets.ANDROID_KEY_BASE64 }}" | base64 -d > "$RUNNER_TEMP/nyxa-release.jks"
+          echo "storeFile=$RUNNER_TEMP/nyxa-release.jks" > keystore.properties
+          echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" >> keystore.properties
+          echo "password=${{ secrets.ANDROID_KEY_PASSWORD }}" >> keystore.properties
+
+      - name: Build the APK
+        run: npm run tauri android build -- --apk --target aarch64
+        env:
+          NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.2.12479018
+
+      - name: Upload the APK
+        uses: actions/upload-artifact@v7
+        with:
+          path: app/src-tauri/gen/android/app/build/outputs/apk/**/*.apk
+          archive: false
