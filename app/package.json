@@ -1,7 +1,7 @@
 {
   "name": "app",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,8 @@
     "tauri": "tauri",
     "cable": "%LOCALAPPDATA%\\Android\\Sdk\\platform-tools\\adb.exe reverse tcp:1420 tcp:1420 && %LOCALAPPDATA%\\Android\\Sdk\\platform-tools\\adb.exe reverse tcp:1421 tcp:1421",
     "phone": "npm run cable && tauri android dev --host 127.0.0.1",
-    "test": "vitest run"
+    "test": "vitest run",
+    "version:set": "powershell -ExecutionPolicy Bypass -File .\\scripts\\set-version.ps1"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
