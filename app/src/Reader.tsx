@@ -46,7 +46,7 @@ function Reader({ settings, onSettingsChange }: ReaderProps) {
 
     if (zone === "left") viewRef.current?.goLeft();
     else if (zone === "right") viewRef.current?.goRight();
-    else if (window.matchMedia("(pointer: coarse)").matches) { setBarsHidden((hidden) => !hidden); }
+    else if (window.matchMedia("(pointer: coarse)").matches && viewRef.current) { setBarsHidden((hidden) => !hidden); }
   }
 
   function handleBookClick(e: MouseEvent, doc: Document) {
