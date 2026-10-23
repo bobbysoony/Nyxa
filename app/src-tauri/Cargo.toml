@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "0.1.0"
+version = "0.2.0"
 description = "Nyxa: read web novels, manhwa and books in one app"
 authors = ["Haneef Moheb"]
 edition = "2024"
