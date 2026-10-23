@@ -1,4 +1,9 @@
 import { defaultSettings, Settings } from "./settings";
+import { useEffect, useState } from "react";
+import { getVersion } from "@tauri-apps/api/app";
+import { openUrl } from "@tauri-apps/plugin-opener";
+
+const feedbackForm = "https://forms.gle/XayPLfGcgJ4G7K4t5"
 
 type SettingsPanelProps = {
   settings: Settings;
@@ -7,6 +12,15 @@ type SettingsPanelProps = {
 
 function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
   const scrolled = settings.readingMode === "scrolled";
+  const [version, setVersion] = useState("");
+
+  useEffect(() => {
+    loadVersion();
+  }, []);
+
+  async function loadVersion() {
+    setVersion(await getVersion());
+  }
 
   return (
     <div className="settings-panel">
@@ -101,7 +115,14 @@ function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
           <option value="system-ui, sans-serif">Sans-serif</option>
         </select>
       </label>
+
+
       <button onClick={() => onChange(defaultSettings)}>Reset to default</button>
+
+      <div className="about">
+        <span>Nyxa {version}</span>
+        <button onClick={() => openUrl(feedbackForm)}>Send feedback</button>
+      </div>
     </div>
   );
 }
