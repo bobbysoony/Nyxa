@@ -1,4 +1,6 @@
 ![Build Nyxa](https://github.com/bobbysoony/Nyxa/actions/workflows/build.yml/badge.svg)
+![Latest release](https://img.shields.io/github/v/release/bobbysoony/Nyxa)
+
 
 # Nyxa
 A reading app for novels, manga, manhwa and books, available for Android and Windows --
