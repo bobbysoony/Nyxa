@@ -45,5 +45,10 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "plugins":{
+    "http":{
+      "scopeRedirects": true
+    }
   }
 }
