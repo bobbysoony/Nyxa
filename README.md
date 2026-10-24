@@ -7,7 +7,21 @@ A reading app for novels, manga, manhwa and books, available for Android and Win
 Built with Tauri, React and Rust
 
 ## What's new
-Nyxa has its own icon, shows its version in the Aa panel, and has a Send feedback button. Beta 1 starts here: thanks for testing!
+<!-- whats-new start -->
+**Nyxa v0.2.0:**
+
+- Logo, version in the setting panel and a feedback button
+- Added latest release badge
+- Added github release from version tag
+- Remove accidental copy of the repo
+
+Full changelog in the [v0.2.0 release](https://github.com/bobbysoony/Nyxa/releases/tag/v0.2.0).
+<!-- whats-new end -->
+
+## Latest release
+<!-- latest-release start -->
+**Nyxa v0.2.0** is the latest release. See What's new above.
+<!-- latest-release end -->
 
 ## How to install
 Go to the [latest release](https://github.com/bobbysoony/Nyxa/releases/latest) and download the file for your device from **Assets**.

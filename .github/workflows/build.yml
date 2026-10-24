@@ -121,8 +121,10 @@ jobs:
       contents: write
 
     steps:
-      - name: Get the code
+      - name: Get the code, with every commit and tag
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Check the tag matches Nyxa's version
         run: |
@@ -143,7 +145,66 @@ jobs:
           ls -l files
           mv files/*.apk "files/Nyxa_${GITHUB_REF_NAME#v}_android.apk"
 
+      - name: Write the changelog from the commit messages since the last release
+        run: |
+          previous=$(git describe --tags --abbrev=0 "$GITHUB_REF_NAME^" 2>/dev/null || true)
+          git log "${previous:+$previous..}$GITHUB_REF_NAME" --no-merges --pretty="- %s" \
+            -E -i --invert-grep --grep="^(set )?version (to )?[0-9]" --grep="^Update What's new" > changes.md
+          {
+            echo "## What's changed"
+            cat changes.md
+            echo
+            awk '/^## How to install/ { on = 1; print; next } /^## / { on = 0 } on' README.md
+          } > notes.md
+          cat notes.md
+
       - name: Make a draft release
-        run: gh release create "$GITHUB_REF_NAME" files/* --draft --title "Nyxa $GITHUB_REF_NAME" --generate-notes
+        run: gh release create "$GITHUB_REF_NAME" files/* --draft --title "Nyxa $GITHUB_REF_NAME" --notes-file notes.md --generate-notes
         env:
           GH_TOKEN: ${{ github.token }}
+
+      # What's new changes on big releases (0.3.0), Latest release on every release (0.3.1 too)
+      - name: Put the newest changes in the README
+        run: |
+          git checkout main
+          release="https://github.com/$GITHUB_REPOSITORY/releases/tag/$GITHUB_REF_NAME"
+
+          # Swaps the lines between <!-- $1 start --> and <!-- $1 end --> in the README for the file $2
+          replace() {
+            awk -v name="$1" -v file="$2" '
+              index($0, "<!-- " name " start -->") { print; while ((getline line < file) > 0) print line; skip = 1; next }
+              index($0, "<!-- " name " end -->") { skip = 0 }
+              !skip
+            ' README.md > README.new
+            mv README.new README.md
+          }
+
+          if [ "${GITHUB_REF_NAME##*.}" = 0 ]; then
+            {
+              echo "**Nyxa $GITHUB_REF_NAME:**"
+              echo
+              head -n 5 changes.md
+              echo
+              echo "Full changelog in the [$GITHUB_REF_NAME release]($release)."
+            } > whats-new.md
+            replace whats-new whats-new.md
+            echo "**Nyxa $GITHUB_REF_NAME** is the latest release. See What's new above." > latest.md
+          else
+            {
+              echo "**Nyxa $GITHUB_REF_NAME** is the latest release. It includes fixes like:"
+              echo
+              head -n 5 changes.md
+              echo
+              echo "Full changelog in the [$GITHUB_REF_NAME release]($release)."
+            } > latest.md
+          fi
+          replace latest-release latest.md
+
+          if git diff --quiet; then
+            echo "The README is already up to date"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -am "Update What's new for $GITHUB_REF_NAME"
+            git push origin main
+          fi
