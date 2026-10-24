@@ -116,7 +116,6 @@ function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
         </select>
       </label>
 
-
       <button onClick={() => onChange(defaultSettings)}>Reset to default</button>
 
       <div className="about">

@@ -10,11 +10,13 @@ Built with Tauri, React and Rust
 Nyxa has its own icon, shows its version in the Aa panel, and has a Send feedback button. Beta 1 starts here: thanks for testing!
 
 ## How to install
-**Android:** on your phone, tap `Nyxa_0.2.0_android.apk` below and open it. If Android asks, allow your browser to install unknown apps. If Play Protect warns you, tap **More details** → **Install anyway** (it says this about every app that isn't from the Play Store).
+Go to the [latest release](https://github.com/bobbysoony/Nyxa/releases/latest) and download the file for your device from **Assets**.
 
-**Windows:** download `Nyxa_0.2.0_x64-setup.exe` and open it. If a blue box says "Windows protected your PC", click **More info** → **Run anyway**.
+**Android:** on your phone, tap the file ending in `_android.apk` and open it. If Android asks, allow your browser to install unknown apps. If Play Protect warns you, tap **More details** → **Install anyway** (it says this about every app that isn't from the Play Store).
 
-**Updating:** download the new file from this page and install it over the old one. Your books and place are kept. On Android, the free app [Obtainium](https://obtainium.imranr.dev) can do this for you: Add app → paste `https://github.com/bobbysoony/Nyxa` → Add.
+**Windows:** download the file ending in `_x64-setup.exe` and open it. If a blue box says "Windows protected your PC", click **More info** → **Run anyway**.
+
+**Updating:** download the new file from the latest release and install it over the old one. Your books and place are kept. On Android, the free app [Obtainium](https://obtainium.imranr.dev) can do this for you: Add app → paste `https://github.com/bobbysoony/Nyxa` → Add.
 
 Found a problem? Aa → **Send feedback**.
 
