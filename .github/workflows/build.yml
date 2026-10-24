@@ -145,66 +145,72 @@ jobs:
           ls -l files
           mv files/*.apk "files/Nyxa_${GITHUB_REF_NAME#v}_android.apk"
 
-      - name: Write the changelog from the commit messages since the last release
+      # Big release (0.3.0): your What's new from the README, then every commit.
+      # Small release (0.3.1): every commit. Both get the install steps.
+      - name: Write the release notes and the fixes list
         run: |
-          previous=$(git describe --tags --abbrev=0 "$GITHUB_REF_NAME^" 2>/dev/null || true)
-          git log "${previous:+$previous..}$GITHUB_REF_NAME" --no-merges --pretty="- %s" \
-            -E -i --invert-grep --grep="^(set )?version (to )?[0-9]" --grep="^Update What's new" > changes.md
+          tag="$GITHUB_REF_NAME"
+          version="${tag#v}"
+          previous=$(git describe --tags --abbrev=0 "$tag^" 2>/dev/null || true)
+          big="v${version%.*}.0"
+          git rev-parse -q --verify "refs/tags/$big" > /dev/null || big="$previous"
+
+          # Commit messages, without version bumps and the robot's README commits
+          commits() {
+            git log "${1:+$1..}$tag" --no-merges --pretty="- %s" -E -i --invert-grep \
+              --grep="^(set )?version (to )?[0-9]" --grep="^Update (What's new|latest fixes)"
+          }
+          # The lines between <!-- name start --> and <!-- name end --> in the README
+          section() {
+            awk -v n="$1" 'index($0, "<!-- " n " end -->") { on = 0 } on; index($0, "<!-- " n " start -->") { on = 1 }' README.md
+          }
+
           {
-            echo "## What's changed"
-            cat changes.md
+            if [ "${version##*.}" = 0 ]; then
+              if ! section whats-new | grep -qF "$version"; then
+                echo "::error::Write What's new for $version in the README before tagging a big release"
+                exit 1
+              fi
+              echo "## What's new"
+              section whats-new
+              echo
+            fi
+            echo "## Full changelog"
+            commits "$previous"
             echo
             awk '/^## How to install/ { on = 1; print; next } /^## / { on = 0 } on' README.md
           } > notes.md
-          cat notes.md
+
+          {
+            if [ "${version##*.}" = 0 ]; then
+              echo "No fixes since $version yet."
+            else
+              echo "**Nyxa $version** fixes since ${big#v}:"
+              echo
+              commits "$big"
+              echo
+              echo "Details in the [$tag release](https://github.com/$GITHUB_REPOSITORY/releases/tag/$tag)."
+            fi
+          } > fixes.md
+          cat notes.md fixes.md
 
       - name: Make a draft release
-        run: gh release create "$GITHUB_REF_NAME" files/* --draft --title "Nyxa $GITHUB_REF_NAME" --notes-file notes.md --generate-notes
+        run: gh release create "$GITHUB_REF_NAME" files/* --draft --title "Nyxa $GITHUB_REF_NAME" --notes-file notes.md
         env:
           GH_TOKEN: ${{ github.token }}
 
-      # What's new changes on big releases (0.3.0), Latest release on every release (0.3.1 too)
-      - name: Put the newest changes in the README
+      - name: Put the fixes list in the README
         run: |
           git checkout main
-          release="https://github.com/$GITHUB_REPOSITORY/releases/tag/$GITHUB_REF_NAME"
-
-          # Swaps the lines between <!-- $1 start --> and <!-- $1 end --> in the README for the file $2
-          replace() {
-            awk -v name="$1" -v file="$2" '
-              index($0, "<!-- " name " start -->") { print; while ((getline line < file) > 0) print line; skip = 1; next }
-              index($0, "<!-- " name " end -->") { skip = 0 }
-              !skip
-            ' README.md > README.new
-            mv README.new README.md
-          }
-
-          if [ "${GITHUB_REF_NAME##*.}" = 0 ]; then
-            {
-              echo "**Nyxa $GITHUB_REF_NAME:**"
-              echo
-              head -n 5 changes.md
-              echo
-              echo "Full changelog in the [$GITHUB_REF_NAME release]($release)."
-            } > whats-new.md
-            replace whats-new whats-new.md
-            echo "**Nyxa $GITHUB_REF_NAME** is the latest release. See What's new above." > latest.md
-          else
-            {
-              echo "**Nyxa $GITHUB_REF_NAME** is the latest release. It includes fixes like:"
-              echo
-              head -n 5 changes.md
-              echo
-              echo "Full changelog in the [$GITHUB_REF_NAME release]($release)."
-            } > latest.md
-          fi
-          replace latest-release latest.md
-
+          awk 'index($0, "<!-- fixes start -->") { print; while ((getline line < "fixes.md") > 0) print line; skip = 1; next }
+               index($0, "<!-- fixes end -->") { skip = 0 }
+               !skip' README.md > README.new
+          mv README.new README.md
           if git diff --quiet; then
             echo "The README is already up to date"
-          else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -am "Update What's new for $GITHUB_REF_NAME"
-            git push origin main
+            exit 0
           fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "Update latest fixes for $GITHUB_REF_NAME"
+          git push origin main

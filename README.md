@@ -8,20 +8,19 @@ Built with Tauri, React and Rust
 
 ## What's new
 <!-- whats-new start -->
-**Nyxa v0.2.0:**
+**Nyxa 0.2.0**
 
-- Logo, version in the setting panel and a feedback button
-- Added latest release badge
-- Added github release from version tag
-- Remove accidental copy of the repo
-
-Full changelog in the [v0.2.0 release](https://github.com/bobbysoony/Nyxa/releases/tag/v0.2.0).
+- Nyxa has its own logo: Nyx reading on the moon
+- The Aa panel shows which version you have
+- A Send feedback button, with your version already filled in
 <!-- whats-new end -->
 
-## Latest release
-<!-- latest-release start -->
-**Nyxa v0.2.0** is the latest release. See What's new above.
-<!-- latest-release end -->
+Full changelog on the [latest release page](https://github.com/bobbysoony/Nyxa/releases/latest).
+
+## Latest fixes
+<!-- fixes start -->
+No fixes since 0.2.0 yet.
+<!-- fixes end -->
 
 ## How to install
 Go to the [latest release](https://github.com/bobbysoony/Nyxa/releases/latest) and download the file for your device from **Assets**.
