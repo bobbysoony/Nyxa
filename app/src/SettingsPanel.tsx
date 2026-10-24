@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { getVersion } from "@tauri-apps/api/app";
 import { openUrl } from "@tauri-apps/plugin-opener";
 
-const feedbackForm = "https://forms.gle/XayPLfGcgJ4G7K4t5"
+const feedbackForm = "https://docs.google.com/forms/d/e/1FAIpQLSeja2ymZtDo_tCi4P2g4_c4NjahdpdU1B3YhD85WibXniqqzg/viewform?usp=pp_url&entry.1358451065=";
 
 type SettingsPanelProps = {
   settings: Settings;
@@ -121,7 +121,7 @@ function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
 
       <div className="about">
         <span>Nyxa {version}</span>
-        <button onClick={() => openUrl(feedbackForm)}>Send feedback</button>
+        <button onClick={() => openUrl(feedbackForm + version)}>Send feedback</button>
       </div>
     </div>
   );
