@@ -23,6 +23,18 @@ function Browse() {
     }
   }
 
+  async function showNovels(latest: boolean) {
+    setStatus(latest ? "Loading latest novels…" : "Loading popular novels…");
+    setNovel(null);
+    try {
+      const found = await source.popularNovels(1, { showLatestNovels: latest });
+      setResults(found);
+      setStatus(`${found.length} found`);
+    } catch (err) {
+      setStatus(`Search failed: ${err}`);
+    }
+  }
+
   async function openNovel(item: NovelItem) {
     setStatus(`Opening ${item.name}…`);
     setChapterHtml("");
@@ -50,6 +62,8 @@ function Browse() {
       <div className="browse-bar">
         <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search for a novel" />
         <button onClick={search} disabled={!source}>Search</button>
+        <button onClick={() => showNovels(false)} disabled={!source}>Popular</button>
+        <button onClick={() => showNovels(true)} disabled={!source}>Latest</button>
       </div>
       <p className="browse-status">{status}</p>
 
