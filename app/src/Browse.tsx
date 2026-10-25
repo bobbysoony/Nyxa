@@ -13,7 +13,7 @@ function Browse() {
     try {
       const response = await fetchApi(url);
       const text = await response.text();
-      setStatus(`${response.status} ${response.statusText} · ${text.length} characters`);
+      setStatus(`${response.status} ${response.statusText} · ${text.length} characters ${response.headers.get("content-type") ?? ""} ; ${response.headers.get("content-charset") ?? ""}`);
       setHtml(text);
     } catch (err) {
       setStatus(`Failed: ${err}`);
