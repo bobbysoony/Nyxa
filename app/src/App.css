@@ -206,3 +206,24 @@ body {
   font-size: 12px;
 }
 
+.browse-results,
+.novel-chapters {
+  padding-left: 0;
+  list-style: none;
+}
+
+.browse-results button,
+.novel-chapters button {
+  width: 100%;
+  text-align: left;
+  margin: 2px 0;
+}
+
+.novel-summary {
+  white-space: pre-line;
+}
+
+.chapter-preview {
+  max-width: 40em;
+  line-height: 1.6;
+}

@@ -1,4 +1,4 @@
-// Text from a website must not be read as HTML, or a sneaky peice of code can find its way through,
+// Text from a website must not be read as HTML, or a sneaky piece of code can find its way through,
 // so these 5 swaps turn them to text
 export function escapeHtml(text: string) {
   return text

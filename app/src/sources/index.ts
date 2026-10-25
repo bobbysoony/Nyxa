@@ -1,8 +1,5 @@
-type ChapterParser = (html: string) => { title: string; paragraphs: string[] };
+import type { Source } from "./types";
 
-const found = import.meta.glob<ChapterParser>("./*/parse.ts", {
-  eager: true,
-  import: "parseChapterPage",
-});
+const found = import.meta.glob<Source>("./*/index.ts", { eager: true, import: "default" });
 
-export const chapterParsers = Object.values(found);
+export const sources = Object.values(found);
