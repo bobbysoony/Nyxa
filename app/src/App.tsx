@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { load } from "@tauri-apps/plugin-store";
 import Reader from "./Reader";
+import Browse from "./Browse";
 import { defaultSettings, Settings, getTheme } from "./settings";
 import "./App.css";
-import Browse from "./Browse";
 
 function App() {
   const [settings, setSettings] = useState<Settings | null>(null);
-  const [screen, setScreen] = useState<"reader" | "browse">("browse");
+  const [screen, setScreen] = useState<"reader" | "browse">("reader");
 
   useEffect(() => {
     loadSettings();

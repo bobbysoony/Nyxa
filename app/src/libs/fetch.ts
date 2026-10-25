@@ -1,7 +1,7 @@
 import { fetch } from "@tauri-apps/plugin-http";
 
-// Every request Nyxa sends goes through here. It has the same name as LNReader api,
-// so we can use thier plugins later.
+// Every request Nyxa sends goes through here. It has the same name as LNReader's API,
+// so we can use their plugins later.
 const USER_AGENT =
   "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0 Mobile Safari/537.36";
 
