@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { sources } from "./sources";
 import type { NovelItem, SourceNovel } from "./sources/types";
 import { getChapters, listNovels, saveNovel, type LibraryRow } from "./library/db";
 import { invoke } from "@tauri-apps/api/core";
+import { downloadChapters, type Progress } from "./library/download";
 
 
 const source = sources[0];
@@ -15,6 +16,9 @@ function Browse() {
   const [status, setStatus] = useState(source ? "" : "No sources on this computer");
   const [library, setLibrary] = useState<LibraryRow[]>([]);
   const [libraryId, setLibraryId] = useState<number | null>(null);
+  const [progress, setProgress] = useState<Progress | null>(null);
+  const [downloading, setDownloading] = useState(false);
+  const stopRef = useRef(false);
 
   useEffect(() => {
     listNovels().then(setLibrary);
@@ -47,7 +51,9 @@ function Browse() {
   async function openNovel(item: NovelItem) {
     setStatus(`Opening ${item.name}…`);
     setChapterHtml("");
-    setLibraryId(null);
+    const saved = library.find((row) => row.source === source.id && row.path === item.path);
+    setLibraryId(saved?.id ?? null);
+    setProgress(null);
     try {
       const details = await source.parseNovel(item.path);
       setNovel(details);
@@ -78,6 +84,15 @@ function Browse() {
     } catch (err) {
       setStatus(`Couldn't save it: ${err}`);
     }
+  }
+
+  async function download(count: number) {
+    if (!libraryId) return;
+    stopRef.current = false;
+    setDownloading(true);
+    const result = await downloadChapters(source, libraryId, count, setProgress, () => stopRef.current);
+    setDownloading(false);
+    setStatus(`Downloaded ${result.done} chapters${result.failed ? `, ${result.failed} failed` : ""}`);
   }
 
   async function testSaveChapter() {
@@ -134,7 +149,20 @@ function Browse() {
           <p className="novel-summary">{novel.summary}</p>
           <p>{novel.chapters?.length ?? 0} chapters</p>
           <button onClick={addToLibrary}>{libraryId ? "In your library ✓" : "Add to library"}</button>
-          {libraryId && <button onClick={testSaveChapter}>Test: save chapter 1</button>}
+          {libraryId && (
+            <div className="download">
+              <button onClick={() => download(50)} disabled={downloading}>Download 50 chapters</button>
+              {downloading && <button onClick={() => (stopRef.current = true)}>Stop</button>}
+              {progress && (
+                <p>
+                  <progress value={progress.done + progress.failed} max={progress.total} />{" "}
+                  {progress.done} of {progress.total}
+                  {progress.done == progress.total && " (All done!)"}
+                  {progress.failed > 0 && `, ${progress.failed} failed`}
+                </p>
+              )}
+            </div>
+          )}
 
           <ol className="novel-chapters">
             {novel.chapters?.slice(0, 20).map((ch) => (
