@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { sources } from "./sources";
 import type { NovelItem, SourceNovel } from "./sources/types";
-import { listNovels, saveNovel, type LibraryRow } from "./library/db";
+import { getChapters, listNovels, saveNovel, type LibraryRow } from "./library/db";
+import { invoke } from "@tauri-apps/api/core";
+
 
 const source = sources[0];
 
@@ -78,6 +80,21 @@ function Browse() {
     }
   }
 
+  async function testSaveChapter() {
+    if (!libraryId) return;
+    setStatus("Saving chapter 1…");
+    try {
+      const [first] = await getChapters(libraryId);
+      const html = await source.parseChapter(first.path);
+      const before = new TextEncoder().encode(html).length;
+      const after = await invoke<number>("save_chapter_text", { chapterId: first.id, html });
+      const back = await invoke<string | null>("load_chapter_text", { chapterId: first.id });
+      setStatus(`${before} bytes became ${after} bytes. Read back: ${back === html ? "the same ✓" : "different ✗"}`);
+    } catch (err) {
+      setStatus(`Test failed: ${err}`);
+    }
+  }
+
   return (
     <div className="browse">
       <div className="browse-bar">
@@ -117,6 +134,7 @@ function Browse() {
           <p className="novel-summary">{novel.summary}</p>
           <p>{novel.chapters?.length ?? 0} chapters</p>
           <button onClick={addToLibrary}>{libraryId ? "In your library ✓" : "Add to library"}</button>
+          {libraryId && <button onClick={testSaveChapter}>Test: save chapter 1</button>}
 
           <ol className="novel-chapters">
             {novel.chapters?.slice(0, 20).map((ch) => (

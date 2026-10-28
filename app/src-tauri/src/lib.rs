@@ -1,3 +1,5 @@
+mod chapters;
+
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 use tauri_plugin_sql::{Migration, MigrationKind};
 
@@ -36,7 +38,12 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, shout])
+           .invoke_handler(tauri::generate_handler![
+            greet,
+            shout,
+            chapters::save_chapter_text,
+            chapters::load_chapter_text
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
