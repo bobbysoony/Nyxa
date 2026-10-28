@@ -1,4 +1,6 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
+use tauri_plugin_sql::{Migration, MigrationKind};
+
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! youve been greeted by me now, hahahaha", name)
@@ -12,9 +14,23 @@ fn shout(name: &str) -> String {
     )
 }
 
+fn migrations() -> Vec<Migration> {
+    vec![Migration {
+        version: 1,
+        description: "novels and chapters",
+        sql: include_str!("../migrations/001_novels_and_chapters.sql"),
+        kind: MigrationKind::Up,
+    }]
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+         .plugin(
+            tauri_plugin_sql::Builder::default()
+                .add_migrations("sqlite:nyxa.db", migrations())
+                .build(),
+        )
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_fs::init())

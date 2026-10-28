@@ -11,6 +11,8 @@
     "dialog:default",
     "fs:default",
     "store:default",
-    "fs:allow-appdata-write-recursive"
+    "fs:allow-appdata-write-recursive",
+    "sql:default",
+    "sql:allow-execute"
   ]
 }

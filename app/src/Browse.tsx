@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { sources } from "./sources";
 import type { NovelItem, SourceNovel } from "./sources/types";
+import { listNovels, saveNovel, type NovelRow } from "./library/db";
+
 
 const source = sources[0];
 
@@ -10,6 +12,12 @@ function Browse() {
   const [novel, setNovel] = useState<SourceNovel | null>(null);
   const [chapterHtml, setChapterHtml] = useState("");
   const [status, setStatus] = useState(source ? "" : "No sources on this computer");
+  const [library, setLibrary] = useState<NovelRow[]>([]);
+  const [libraryId, setLibraryId] = useState<number | null>(null);
+
+  useEffect(() => {
+    listNovels().then(setLibrary);
+  }, []);
 
   async function search() {
     setStatus("Searching…");
@@ -38,6 +46,7 @@ function Browse() {
   async function openNovel(item: NovelItem) {
     setStatus(`Opening ${item.name}…`);
     setChapterHtml("");
+    setLibraryId(null);
     try {
       const details = await source.parseNovel(item.path);
       setNovel(details);
@@ -57,6 +66,19 @@ function Browse() {
     }
   }
 
+  async function addToLibrary() {
+    if (!novel) return;
+    setStatus("Saving…");
+    try {
+      const id = await saveNovel(source.id, novel);
+      setLibraryId(id);
+      setLibrary(await listNovels());
+      setStatus(`Saved with ${novel.chapters?.length ?? 0} chapters`);
+    } catch (err) {
+      setStatus(`Couldn't save it: ${err}`);
+    }
+  }
+
   return (
     <div className="browse">
       <div className="browse-bar">
@@ -66,6 +88,17 @@ function Browse() {
         <button onClick={() => showNovels(true)} disabled={!source}>Latest</button>
       </div>
       <p className="browse-status">{status}</p>
+
+      {!novel && library.length > 0 && (
+        <div className="library-list">
+          <h3>In your library</h3>
+          <ul>
+            {library.map((row) => (
+              <li key={row.id}>{row.name}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {!novel && (
         <ul className="browse-results">
@@ -84,6 +117,8 @@ function Browse() {
           <p className="novel-author">{novel.author}</p>
           <p className="novel-summary">{novel.summary}</p>
           <p>{novel.chapters?.length ?? 0} chapters</p>
+          <button onClick={addToLibrary}>{libraryId ? "In your library ✓" : "Add to library"}</button>
+
           <ol className="novel-chapters">
             {novel.chapters?.slice(0, 20).map((ch) => (
               <li key={ch.path}>
