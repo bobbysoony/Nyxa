@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { sources } from "./sources";
 import type { NovelItem, SourceNovel } from "./sources/types";
-import { listNovels, saveNovel, type NovelRow } from "./library/db";
-
+import { listNovels, saveNovel, type LibraryRow } from "./library/db";
 
 const source = sources[0];
 
@@ -12,7 +11,7 @@ function Browse() {
   const [novel, setNovel] = useState<SourceNovel | null>(null);
   const [chapterHtml, setChapterHtml] = useState("");
   const [status, setStatus] = useState(source ? "" : "No sources on this computer");
-  const [library, setLibrary] = useState<NovelRow[]>([]);
+  const [library, setLibrary] = useState<LibraryRow[]>([]);
   const [libraryId, setLibraryId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -94,7 +93,7 @@ function Browse() {
           <h3>In your library</h3>
           <ul>
             {library.map((row) => (
-              <li key={row.id}>{row.name}</li>
+              <li key={row.id}>{row.name} ({row.total.toLocaleString()})</li>
             ))}
           </ul>
         </div>

@@ -20,6 +20,8 @@ export type ChapterRow = {
   downloaded: number;
 };
 
+export type LibraryRow = NovelRow & { total: number };
+
 let db: Database | null = null;
 
 // Open nyxa.db once, then keep using the same connection.
@@ -72,8 +74,13 @@ async function saveChapterList(novelId: number, chapters: ChapterItem[]) {
 
 export async function listNovels() {
   const db = await getDb();
-  return db.select<NovelRow[]>("SELECT * FROM novels ORDER BY name");
+  return db.select<LibraryRow[]>(
+    `SELECT novels.*,
+       (SELECT COUNT(*) FROM chapters WHERE chapters.novel_id = novels.id) AS total
+     FROM novels ORDER BY name`,
+  );
 }
+
 
 export async function getChapters(novelId: number) {
   const db = await getDb();
