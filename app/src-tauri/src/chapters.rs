@@ -86,4 +86,9 @@ mod tests {
         assert!(squashed.len() < text.len() / 5);
         assert_eq!(decompress(&squashed).unwrap(), text);
     }
+
+    #[test]
+    fn damaged_bytes_give_an_error(){
+        assert!(decompress(b"hello").is_err());
+    }
 }
