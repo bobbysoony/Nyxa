@@ -35,14 +35,23 @@ export async function downloadChapters(
   for (const chapter of chapters) {
     if (shouldStop()) break;
 
-    try {
-      const html = await source.parseChapter(chapter.path);
-      await invoke("save_chapter_text", { chapterId: chapter.id, html });
-      await db.execute("UPDATE chapters SET downloaded = 1 WHERE id = $1", [chapter.id]);
-      progress.done++;
-    } catch (err) {
-      console.error(`Chapter ${chapter.number} failed`, err);
-      progress.failed++;
+    // Try twice: a failure is often a brief hiccup, so wait 5 seconds and retry once.
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const html = await source.parseChapter(chapter.path);
+        await invoke("save_chapter_text", { chapterId: chapter.id, html });
+        await db.execute("UPDATE chapters SET downloaded = 1 WHERE id = $1", [chapter.id]);
+        progress.done++;
+        break;
+      } catch (err) {
+        console.error(`Chapter ${chapter.number} failed (attempt ${attempt})`, err);
+        if (attempt === 2) {
+          progress.failed++;
+        } else {
+          await sleep(5000);
+          if (shouldStop()) break;
+        }
+      }
     }
 
     onProgress({ ...progress });

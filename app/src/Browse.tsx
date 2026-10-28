@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { sources } from "./sources";
 import type { NovelItem, SourceNovel } from "./sources/types";
-import { getChapters, listNovels, saveNovel, type LibraryRow } from "./library/db";
-import { invoke } from "@tauri-apps/api/core";
+import { listNovels, saveNovel, type LibraryRow } from "./library/db";
 import { downloadChapters, type Progress } from "./library/download";
 
 
@@ -95,7 +94,7 @@ function Browse() {
     setStatus(`Downloaded ${result.done} chapters${result.failed ? `, ${result.failed} failed` : ""}`);
   }
 
-  async function testSaveChapter() {
+  /*async function testSaveChapter() {
     if (!libraryId) return;
     setStatus("Saving chapter 1…");
     try {
@@ -108,7 +107,7 @@ function Browse() {
     } catch (err) {
       setStatus(`Test failed: ${err}`);
     }
-  }
+  }*/
 
   return (
     <div className="browse">
