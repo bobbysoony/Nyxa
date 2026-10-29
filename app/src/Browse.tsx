@@ -94,21 +94,6 @@ function Browse() {
     setStatus(`Downloaded ${result.done} chapters${result.failed ? `, ${result.failed} failed` : ""}`);
   }
 
-  /*async function testSaveChapter() {
-    if (!libraryId) return;
-    setStatus("Saving chapter 1…");
-    try {
-      const [first] = await getChapters(libraryId);
-      const html = await source.parseChapter(first.path);
-      const before = new TextEncoder().encode(html).length;
-      const after = await invoke<number>("save_chapter_text", { chapterId: first.id, html });
-      const back = await invoke<string | null>("load_chapter_text", { chapterId: first.id });
-      setStatus(`${before} bytes became ${after} bytes. Read back: ${back === html ? "the same ✓" : "different ✗"}`);
-    } catch (err) {
-      setStatus(`Test failed: ${err}`);
-    }
-  }*/
-
   return (
     <div className="browse">
       <div className="browse-bar">
@@ -156,7 +141,7 @@ function Browse() {
                 <p>
                   <progress value={progress.done + progress.failed} max={progress.total} />{" "}
                   {progress.done} of {progress.total}
-                  {progress.done == progress.total && " (All done!)"}
+                  {progress.done === progress.total && " (All done!)"}
                   {progress.failed > 0 && `, ${progress.failed} failed`}
                 </p>
               )}
