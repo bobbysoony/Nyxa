@@ -7,7 +7,7 @@ import { downloadChapters, type Progress } from "./library/download";
 
 const source = sources[0];
 
-function Browse() {
+function Browse({ onRead }: { onRead: (novelId: number) => void }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<NovelItem[]>([]);
   const [novel, setNovel] = useState<SourceNovel | null>(null);
@@ -109,7 +109,9 @@ function Browse() {
           <h3>In your library</h3>
           <ul>
             {library.map((row) => (
-              <li key={row.id}>{row.name} ({row.total.toLocaleString()})</li>
+              <li key={row.id}>
+                <button onClick={() => onRead(row.id)}>📖 {row.name} ({row.total.toLocaleString()})</button>
+              </li>
             ))}
           </ul>
         </div>
@@ -135,6 +137,7 @@ function Browse() {
           <button onClick={addToLibrary}>{libraryId ? "In your library ✓" : "Add to library"}</button>
           {libraryId && (
             <div className="download">
+              <button onClick={() => onRead(libraryId)}>📖 Read</button>
               <button onClick={() => download(50)} disabled={downloading}>Download 50 chapters</button>
               {downloading && <button onClick={() => (stopRef.current = true)}>Stop</button>}
               {progress && (

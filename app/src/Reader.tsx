@@ -7,9 +7,9 @@ import SettingsPanel from "./SettingsPanel";
 import { makeBookCSS, Settings } from "./settings";
 import { getTitle } from "./getTitle";
 import { tapZone } from "./taps";
-import type { FoliateBook, FoliateView } from "./foliate"; 
-import { makeNovelBook } from "./library/novelBook";        
-import Contents from "./Contents";  
+import type { FoliateBook, FoliateView } from "./foliate";
+import { makeNovelBook } from "./library/novelBook";
+import Contents from "./Contents";
 
 type SavedBook = {
   file: string;
@@ -19,10 +19,10 @@ type SavedBook = {
 type ReaderProps = {
   settings: Settings;
   onSettingsChange: (settings: Settings) => void;
-  novelId: number | null;                                     
+  novelId: number | null;
 };
 
-function Reader({ settings, onSettingsChange }: ReaderProps) {
+function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<FoliateView | null>(null);
   const bookFileRef = useRef("");
@@ -67,10 +67,11 @@ function Reader({ settings, onSettingsChange }: ReaderProps) {
     return () => window.removeEventListener("keydown", handleKey);
   }, []);
 
-  useEffect(() => {
+  useEffect(() => {                       // your startup effect from lesson 4b
     if (startedRef.current) return;
     startedRef.current = true;
-    reopenLastBook();
+    if (novelId) openNovel(novelId);      // changed
+    else reopenLastBook();                // changed
   }, []);
 
   useEffect(() => {
@@ -108,6 +109,7 @@ function Reader({ settings, onSettingsChange }: ReaderProps) {
   }
 
   async function savePosition(position: string) {
+    if (!bookFileRef.current) return;
     const store = await load("nyxa.json");
     await store.set("lastBook", { file: bookFileRef.current, position });
   }
@@ -142,7 +144,7 @@ function Reader({ settings, onSettingsChange }: ReaderProps) {
     await openBook(book);
   }
 
-  async function openBook(file: File, position?: string) {
+  async function openBook(book: File | FoliateBook, position?: string) {
     viewRef.current?.remove();
 
     const view = document.createElement("foliate-view");
@@ -161,9 +163,9 @@ function Reader({ settings, onSettingsChange }: ReaderProps) {
       doc.addEventListener("click", (ev) => handleBookClick(ev, doc));
     });
 
-    await view.open(file);
+    await view.open(book);
     applySettings();
-    setTitle(getTitle(view.book.metadata?.title) || file.name);
+    setTitle(getTitle(view.book.metadata?.title) || (book instanceof File ? book.name : ""));
 
     if (position) {
       await view.init({ lastLocation: position });
@@ -176,8 +178,9 @@ function Reader({ settings, onSettingsChange }: ReaderProps) {
     <div className={barsHidden ? "reader bars-hidden" : "reader"}>
       <div className="reader-bar">
         <button onClick={pickBook}>📖 Open book</button>
+        <button onClick={() => setShowContents(true)}>☰ Contents</button>
         <span>{title}</span>
-        <span>{error}</span>
+        {error && <span>{error}</span>} 
         <span>{welcome}</span>
         <button onClick={() => setShowSettings(!showSettings)}>Aa</button>
         {showSettings && (
