@@ -21,9 +21,21 @@ export type LoadDetail = {
   index: number;
 };
 
+export type FoliateSection = {
+  id: string;
+  size: number;
+  linear: string;
+  load(): Promise<string>;
+  unload(): void;
+};
+
 export type FoliateBook = {
   metadata?: { title?: string | Record<string, string> };
   toc?: TocItem[];
+  sections?: FoliateSection[];
+  resolveHref?(href: string): { index: number; anchor(doc: Document): Element | number | null } | null;
+  splitTOCHref?(href: string): string[];
+  getTOCFragment?(doc: Document, fragment: string): Element | null;
 };
 
 export interface FoliateView extends HTMLElement {

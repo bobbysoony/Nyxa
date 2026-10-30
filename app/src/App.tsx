@@ -8,6 +8,8 @@ import "./App.css";
 function App() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [screen, setScreen] = useState<"reader" | "browse">("reader");
+  const [novelId, setNovelId] = useState<number | null>(null);
+
 
   useEffect(() => {
     loadSettings();
@@ -32,18 +34,28 @@ function App() {
     await store.set("settings", newSettings);
   }
 
+  function readNovel(id: number) {
+    setNovelId(id);
+    setScreen("reader");
+  }
+
+  function showReader() {
+    setNovelId(null);
+    setScreen("reader");
+  }
+
   if (!settings) return null;
 
   return (
     <div className="app">
       <nav className="app-tabs">
-        <button onClick={() => setScreen("reader")}>Reader</button>
+        <button onClick={showReader}>Reader</button>
         <button onClick={() => setScreen("browse")}>Browse</button>
       </nav>
       {screen === "reader" ? (
-        <Reader settings={settings} onSettingsChange={changeSettings} />
+        <Reader settings={settings} onSettingsChange={changeSettings} novelId={novelId} />
       ) : (
-        <Browse />
+        <Browse onRead={readNovel} />
       )}
     </div>
   );

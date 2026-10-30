@@ -6,8 +6,10 @@ import "../foliate-js/view.js";
 import SettingsPanel from "./SettingsPanel";
 import { makeBookCSS, Settings } from "./settings";
 import { getTitle } from "./getTitle";
-import type { FoliateView } from "./foliate";
 import { tapZone } from "./taps";
+import type { FoliateBook, FoliateView } from "./foliate"; 
+import { makeNovelBook } from "./library/novelBook";        
+import Contents from "./Contents";  
 
 type SavedBook = {
   file: string;
@@ -16,7 +18,8 @@ type SavedBook = {
 
 type ReaderProps = {
   settings: Settings;
-  onSettingsChange: (newSettings: Settings) => void;
+  onSettingsChange: (settings: Settings) => void;
+  novelId: number | null;                                     
 };
 
 function Reader({ settings, onSettingsChange }: ReaderProps) {
@@ -31,6 +34,7 @@ function Reader({ settings, onSettingsChange }: ReaderProps) {
   const [welcome, setWelcome] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [barsHidden, setBarsHidden] = useState(false);
+  const [showContents, setShowContents] = useState(false);
 
 
   function handleKey(e: KeyboardEvent) {
@@ -128,6 +132,16 @@ function Reader({ settings, onSettingsChange }: ReaderProps) {
     }
   }
 
+  async function openNovel(id: number) {
+    bookFileRef.current = "";
+    const book = await makeNovelBook(id);
+    if (!book) {
+      setError("This novel has no chapters yet");
+      return;
+    }
+    await openBook(book);
+  }
+
   async function openBook(file: File, position?: string) {
     viewRef.current?.remove();
 
@@ -175,6 +189,18 @@ function Reader({ settings, onSettingsChange }: ReaderProps) {
       </div>
 
       <div className="reader-page" ref={containerRef} onClick={(e) => tapAt(e.clientX)}></div>
+
+      {showContents && (
+        <Contents
+          toc={viewRef.current?.book.toc ?? []}
+          current={chapter}
+          onPick={(href) => {
+            viewRef.current?.goTo(href);
+            setShowContents(false);
+          }}
+          onClose={() => setShowContents(false)}
+        />
+      )}
 
       <div className="reader-bar">
         <button onClick={() => viewRef.current?.prev()}>◀ Back</button>
