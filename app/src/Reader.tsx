@@ -35,6 +35,7 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
   const [showSettings, setShowSettings] = useState(false);
   const [barsHidden, setBarsHidden] = useState(false);
   const [showContents, setShowContents] = useState(false);
+  const [downloaded, setDownloaded] = useState<number | null>(null);
 
 
   function handleKey(e: KeyboardEvent) {
@@ -142,9 +143,11 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
       return;
     }
     await openBook(book);
+    setDownloaded(book.chapters.filter((chapter) => chapter.downloaded).length);
   }
 
   async function openBook(book: File | FoliateBook, position?: string) {
+    setDownloaded(null); // EPUB files have no download count
     viewRef.current?.remove();
 
     const view = document.createElement("foliate-view");
@@ -197,6 +200,7 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
         <Contents
           toc={viewRef.current?.book.toc ?? []}
           current={chapter}
+          downloaded={downloaded}
           onPick={(href) => {
             viewRef.current?.goTo(href);
             setShowContents(false);
@@ -204,6 +208,8 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
           onClose={() => setShowContents(false)}
         />
       )}
+
+      {showContents && <div className="backdrop" onClick={() => setShowContents(false)}></div>}
 
       <div className="reader-bar">
         <button onClick={() => viewRef.current?.prev()}>◀ Back</button>

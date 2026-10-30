@@ -1,5 +1,4 @@
 // Every reading setting Nyxa has, in one place.
-// Later lessons add new settings here.
 export type Settings = {
   font: string;
   fontSize: number;
