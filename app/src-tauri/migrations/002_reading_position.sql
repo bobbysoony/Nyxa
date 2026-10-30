@@ -1,0 +1,2 @@
+ALTER TABLE novels ADD COLUMN last_chapter INTEGER;
+ALTER TABLE novels ADD COLUMN last_paragraph INTEGER NOT NULL DEFAULT 0;

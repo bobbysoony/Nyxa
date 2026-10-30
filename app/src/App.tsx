@@ -44,7 +44,7 @@ function App() {
     setScreen("reader");
   }
 
-  if (!settings) return null;
+  if (!settings) return <p>Loading…</p>;
 
   return (
     <div className="app">

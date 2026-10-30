@@ -8,6 +8,8 @@ export type NovelRow = {
   name: string;
   author: string | null;
   summary: string | null;
+  last_chapter: number | null;
+  last_paragraph: number;
 };
 
 export type ChapterRow = {
@@ -87,5 +89,19 @@ export async function getChapters(novelId: number) {
   return db.select<ChapterRow[]>(
     "SELECT * FROM chapters WHERE novel_id = $1 ORDER BY number",
     [novelId],
+  );
+}
+
+export async function getNovel(novelId: number) {
+  const db = await getDb();
+  const rows = await db.select<NovelRow[]>("SELECT * FROM novels WHERE id = $1", [novelId]);
+  return rows[0] ?? null;
+}
+
+export async function saveNovelPosition(novelId: number, chapter: number, paragraph: number) {
+  const db = await getDb();
+  await db.execute(
+    "UPDATE novels SET last_chapter = $1, last_paragraph = $2 WHERE id = $3",
+    [chapter, paragraph, novelId],
   );
 }

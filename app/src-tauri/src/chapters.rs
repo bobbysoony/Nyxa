@@ -1,15 +1,17 @@
 use std::io::{Read, Write};
 
+use flate2::Compression;
 use flate2::read::ZlibDecoder;
 use flate2::write::ZlibEncoder;
-use flate2::Compression;
-use rusqlite::{params, Connection, OptionalExtension};
+use rusqlite::{Connection, OptionalExtension, params};
 use tauri::Manager;
 
 /// Squash text into fewer bytes.
 fn compress(text: &str) -> Vec<u8> {
     let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
-    encoder.write_all(text.as_bytes()).expect("writing to memory can't fail");
+    encoder
+        .write_all(text.as_bytes())
+        .expect("writing to memory can't fail");
     encoder.finish().expect("writing to memory can't fail")
 }
 
@@ -88,7 +90,7 @@ mod tests {
     }
 
     #[test]
-    fn damaged_bytes_give_an_error(){
+    fn damaged_bytes_give_an_error() {
         assert!(decompress(b"hello").is_err());
     }
 }

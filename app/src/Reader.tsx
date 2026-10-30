@@ -8,8 +8,10 @@ import { makeBookCSS, Settings } from "./settings";
 import { getTitle } from "./getTitle";
 import { tapZone } from "./taps";
 import type { FoliateBook, FoliateView } from "./foliate";
-import { makeNovelBook } from "./library/novelBook";
-import Contents from "./Contents";
+import { makeNovelBook, type NovelBook } from "./library/novelBook";
+import Contents from "./Contents.tsx";
+import { getNovel, saveNovelPosition } from "./library/db";
+import { paragraphAt, positionHref } from "./library/position";
 
 type SavedBook = {
   file: string;
@@ -26,6 +28,7 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<FoliateView | null>(null);
   const bookFileRef = useRef("");
+  const novelRef = useRef<NovelBook | null>(null);
   const startedRef = useRef(false);
   const [title, setTitle] = useState("");
   const [chapter, setChapter] = useState("");
@@ -36,6 +39,7 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
   const [barsHidden, setBarsHidden] = useState(false);
   const [showContents, setShowContents] = useState(false);
   const [downloaded, setDownloaded] = useState<number | null>(null);
+  const [place, setPlace] = useState("");
 
 
   function handleKey(e: KeyboardEvent) {
@@ -68,11 +72,11 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
     return () => window.removeEventListener("keydown", handleKey);
   }, []);
 
-  useEffect(() => {                       // your startup effect from lesson 4b
+  useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
-    if (novelId) openNovel(novelId);      // changed
-    else reopenLastBook();                // changed
+    if (novelId) openNovel(novelId);
+    else reopenLastBook();
   }, []);
 
   useEffect(() => {
@@ -101,6 +105,9 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
       await writeFile(fileName, epubContent, { baseDir: BaseDirectory.AppData });
 
       bookFileRef.current = fileName;
+      novelRef.current = null;
+      const store = await load("nyxa.json");
+      await store.set("lastNovel", null);
       await openBook(new File([epubContent], fileName));
 
     } catch (err) {
@@ -118,6 +125,11 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
   async function reopenLastBook() {
     try {
       const store = await load("nyxa.json");
+      const lastNovel = await store.get<number | null>("lastNovel");
+      if (lastNovel) {
+        await openNovel(lastNovel);
+        return;
+      }
       const saved = await store.get<SavedBook>("lastBook");
       if (!saved) return;
 
@@ -142,8 +154,17 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
       setError("This novel has no chapters yet");
       return;
     }
-    await openBook(book);
-    setDownloaded(book.chapters.filter((chapter) => chapter.downloaded).length);
+
+    const store = await load("nyxa.json");
+    await store.set("lastNovel", id);
+
+    const novel = await getNovel(id);
+    const position = novel?.last_chapter
+      ? positionHref(novel.last_chapter, novel.last_paragraph)
+      : undefined;
+
+    novelRef.current = book;
+    await openBook(book, position);
   }
 
   async function openBook(book: File | FoliateBook, position?: string) {
@@ -157,7 +178,16 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
     view.addEventListener("relocate", (e) => {
       setChapter(e.detail.tocItem?.label ?? "");
       setProgress(Math.round((e.detail.fraction ?? 0) * 100));
-      savePosition(e.detail.cfi);
+
+      const novel = novelRef.current;
+      if (novel) {
+        const index = e.detail.section?.current ?? 0;
+        setPlace(novel.places[index] ?? "");
+        saveNovelPosition(novel.novelId, novel.chapters[index].number, paragraphAt(e.detail.range));
+      } else {
+        setPlace("");
+        savePosition(e.detail.cfi);
+      }
     });
 
     view.addEventListener("load", (e) => {
@@ -183,7 +213,7 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
         <button onClick={pickBook}>📖 Open book</button>
         <button onClick={() => setShowContents(true)}>☰ Contents</button>
         <span>{title}</span>
-        {error && <span>{error}</span>} 
+        {error && <span>{error}</span>}
         <span>{welcome}</span>
         <button onClick={() => setShowSettings(!showSettings)}>Aa</button>
         {showSettings && (
@@ -214,7 +244,7 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
       <div className="reader-bar">
         <button onClick={() => viewRef.current?.prev()}>◀ Back</button>
         <span>
-          {chapter} {progress}%
+          {place || chapter} {progress}%
         </span>
         <button onClick={() => viewRef.current?.next()}>Next ▶</button>
       </div>

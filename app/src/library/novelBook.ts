@@ -4,6 +4,7 @@ import { escapeHtml } from "../sources/html";
 import { sources } from "../sources";
 import type { Source } from "../sources/types";
 import type { FoliateBook, FoliateSection } from "../foliate";
+import { findParagraph } from "./position";
 
 export type Volume = {
   label: string;
@@ -69,6 +70,7 @@ async function chapterBody(chapter: ChapterRow, source?: Source) {
 export type NovelBook = FoliateBook & {
   novelId: number;
   chapters: ChapterRow[];
+  places: string[];
 };
 
 export async function makeNovelBook(novelId: number): Promise<NovelBook | null> {
@@ -98,7 +100,16 @@ export async function makeNovelBook(novelId: number): Promise<NovelBook | null> 
     };
   });
 
-  const toc = groupVolumes(chapters).map((volume) => ({
+  const volumes = groupVolumes(chapters);
+  const places = volumes.flatMap((volume) =>
+    volume.chapters.map((chapter) =>
+      volume.label.startsWith("Chapters ")
+        ? `Chapter ${chapter.number}`
+        : `${volume.label} · Chapter ${chapter.number}`,
+    ),
+  );
+
+  const toc = volumes.map((volume) => ({
     label: volume.label,
     href: chapterHref(volume.chapters[0].number),
     subitems: volume.chapters.map((chapter) => ({
@@ -110,18 +121,21 @@ export async function makeNovelBook(novelId: number): Promise<NovelBook | null> 
   return {
     novelId,
     chapters,
+    places,
     metadata: { title: novels[0].name },
     sections,
     toc,
     resolveHref(href) {
-      const index = sections.findIndex((section) => section.id === href.split("#")[0]);
-      return index < 0 ? null : { index, anchor: () => 0 };
+      const [id, fragment] = href.split("#");
+      const index = sections.findIndex((section) => section.id === id);
+      if (index < 0) return null;
+      return { index, anchor: (doc: Document) => findParagraph(doc, fragment) ?? 0 };
     },
     splitTOCHref(href) {
       return href.split("#");
     },
-    getTOCFragment() {
-      return null;
+    getTOCFragment(doc, fragment) {
+      return findParagraph(doc, fragment);
     },
   };
 }
