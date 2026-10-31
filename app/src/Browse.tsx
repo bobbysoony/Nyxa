@@ -110,11 +110,11 @@ function Browse({ onRead }: { onRead: (novelId: number) => void }) {
           <ul>
             {library.map((row) => (
               <li key={row.id}>
-                <button onClick={() => onRead(row.id)}>📖 {row.name} ({row.total.toLocaleString()})</button>
+                <button onClick={() => onRead(row.id)}>📖 {row.name} · Read: {row.last_chapter ?? 0} / {row.total.toLocaleString()}</button>
               </li>
             ))}
           </ul>
-        </div>
+         </div>
       )}
 
       {!novel && (

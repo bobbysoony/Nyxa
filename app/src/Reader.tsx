@@ -122,11 +122,11 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
     await store.set("lastBook", { file: bookFileRef.current, position });
   }
 
-  async function reopenLastBook() {
+  async function reopenLastBook(epubOnly = false) {
     try {
       const store = await load("nyxa.json");
       const lastNovel = await store.get<number | null>("lastNovel");
-      if (lastNovel) {
+      if (lastNovel && !epubOnly) {
         await openNovel(lastNovel);
         return;
       }
@@ -138,6 +138,8 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
 
       const epubContent = await readFile(saved.file, { baseDir: BaseDirectory.AppData });
       bookFileRef.current = saved.file;
+      novelRef.current = null;
+      await store.set("lastNovel", null);
       await openBook(new File([epubContent], saved.file), saved.position);
       setWelcome("Welcome back! Picking up where you left off.");
       setTimeout(() => setWelcome(""), 3000);
@@ -165,6 +167,7 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
 
     novelRef.current = book;
     await openBook(book, position);
+    setDownloaded(book.chapters.filter((chapter) => chapter.downloaded).length);
   }
 
   async function openBook(book: File | FoliateBook, position?: string) {
@@ -211,6 +214,7 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
     <div className={barsHidden ? "reader bars-hidden" : "reader"}>
       <div className="reader-bar">
         <button onClick={pickBook}>📖 Open book</button>
+        <button onClick={() => reopenLastBook(true)}>📚 Last EPUB</button>
         <button onClick={() => setShowContents(true)}>☰ Contents</button>
         <span>{title}</span>
         {error && <span>{error}</span>}
