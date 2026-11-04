@@ -4,8 +4,6 @@ import type { NovelItem, SourceNovel } from "./sources/types";
 import { downloadChapters, type Progress } from "./library/download";
 import { listNovels, saveNovel, setAllRead, type LibraryRow } from "./library/db";
 
-
-
 const source = sources[0];
 
 function Browse({ onRead }: { onRead: (novelId: number) => void }) {
@@ -120,8 +118,7 @@ function Browse({ onRead }: { onRead: (novelId: number) => void }) {
           <ul>
             {library.map((row) => (
               <li key={row.id}>
-                <button onClick={() => onRead(row.id)}>📖 {row.name} · Read: {row.last_chapter ?? 0} / {row.total.toLocaleString()}</button>
-
+                <button onClick={() => onRead(row.id)}>📖 {row.name} · Read: {row.total - row.unread} / {row.total.toLocaleString()}</button>
                 {row.unread > 0 ? (
                   <span className="unread">{row.unread} unread</span>
                 ) : (
@@ -177,7 +174,6 @@ function Browse({ onRead }: { onRead: (novelId: number) => void }) {
                 </p>
               )}
             </div>
-            
           )}
 
           <ol className="novel-chapters">

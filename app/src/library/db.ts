@@ -20,7 +20,7 @@ export type ChapterRow = {
   path: string;
   volume: string | null;
   downloaded: number;
-  read: number;  
+  read: number;
 };
 
 let db: Database | null = null;
