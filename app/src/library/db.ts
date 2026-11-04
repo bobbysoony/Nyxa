@@ -20,9 +20,8 @@ export type ChapterRow = {
   path: string;
   volume: string | null;
   downloaded: number;
+  read: number;  
 };
-
-export type LibraryRow = NovelRow & { total: number };
 
 let db: Database | null = null;
 
@@ -74,12 +73,18 @@ async function saveChapterList(novelId: number, chapters: ChapterItem[]) {
   }
 }
 
+export type LibraryRow = NovelRow & { total: number; unread: number };
+
 export async function listNovels() {
   const db = await getDb();
   return db.select<LibraryRow[]>(
     `SELECT novels.*,
-       (SELECT COUNT(*) FROM chapters WHERE chapters.novel_id = novels.id) AS total
-     FROM novels ORDER BY name`,
+       (SELECT COUNT(*) FROM chapters
+        WHERE chapters.novel_id = novels.id) AS total,
+       (SELECT COUNT(*) FROM chapters
+        WHERE chapters.novel_id = novels.id AND chapters.read = 0) AS unread
+     FROM novels
+     ORDER BY name`,
   );
 }
 
@@ -104,4 +109,25 @@ export async function saveNovelPosition(novelId: number, chapter: number, paragr
     "UPDATE novels SET last_chapter = $1, last_paragraph = $2 WHERE id = $3",
     [chapter, paragraph, novelId],
   );
+}
+
+export async function setChapterRead(novelId: number, number: number, read: boolean) {
+  const db = await getDb();
+  await db.execute(
+    "UPDATE chapters SET read = $1 WHERE novel_id = $2 AND number = $3",
+    [read ? 1 : 0, novelId, number],
+  );
+}
+
+export async function markReadBefore(novelId: number, number: number) {
+  const db = await getDb();
+  await db.execute(
+    "UPDATE chapters SET read = 1 WHERE novel_id = $1 AND number < $2",
+    [novelId, number],
+  );
+}
+
+export async function setAllRead(novelId: number, read: boolean) {
+  const db = await getDb();
+  await db.execute("UPDATE chapters SET read = $1 WHERE novel_id = $2", [read ? 1 : 0, novelId]);
 }

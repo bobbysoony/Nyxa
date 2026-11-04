@@ -10,8 +10,9 @@ import { tapZone } from "./taps";
 import type { FoliateBook, FoliateView } from "./foliate";
 import { makeNovelBook, type NovelBook } from "./library/novelBook";
 import Contents from "./Contents.tsx";
-import { getNovel, saveNovelPosition } from "./library/db";
-import { paragraphAt, positionHref } from "./library/position";
+import { getNovel, markReadBefore, saveNovelPosition, setChapterRead } from "./library/db";
+import { chapterFromHref, paragraphAt, positionHref } from "./library/position";
+import { finishedChapter } from "./library/finished";
 
 type SavedBook = {
   file: string;
@@ -29,6 +30,8 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
   const viewRef = useRef<FoliateView | null>(null);
   const bookFileRef = useRef("");
   const novelRef = useRef<NovelBook | null>(null);
+  const lastIndexRef = useRef<number | null>(null);
+  const tocHrefsRef = useRef<string[]>([]);
   const startedRef = useRef(false);
   const [title, setTitle] = useState("");
   const [chapter, setChapter] = useState("");
@@ -40,6 +43,7 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
   const [showContents, setShowContents] = useState(false);
   const [downloaded, setDownloaded] = useState<number | null>(null);
   const [place, setPlace] = useState("");
+  const [readChapters, setReadChapters] = useState<Set<number> | null>(null);
 
 
   function handleKey(e: KeyboardEvent) {
@@ -106,6 +110,8 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
 
       bookFileRef.current = fileName;
       novelRef.current = null;
+      lastIndexRef.current = null;
+      setReadChapters(new Set());
       const store = await load("nyxa.json");
       await store.set("lastNovel", null);
       await openBook(new File([epubContent], fileName));
@@ -139,6 +145,8 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
       const epubContent = await readFile(saved.file, { baseDir: BaseDirectory.AppData });
       bookFileRef.current = saved.file;
       novelRef.current = null;
+      lastIndexRef.current = null;
+      setReadChapters(new Set(await store.get<number[]>(`read ${saved.file}`)));
       await store.set("lastNovel", null);
       await openBook(new File([epubContent], saved.file), saved.position);
       setWelcome("Welcome back! Picking up where you left off.");
@@ -166,8 +174,50 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
       : undefined;
 
     novelRef.current = book;
+    lastIndexRef.current = null;
+    setReadChapters(new Set(book.chapters.filter((c) => c.read).map((c) => c.number)));
     await openBook(book, position);
     setDownloaded(book.chapters.filter((chapter) => chapter.downloaded).length);
+  }
+
+  function markRead(number: number, read: boolean) {
+    const novel = novelRef.current;
+    if (novel) setChapterRead(novel.novelId, number, read);
+    setReadChapters((old) => {
+      const updated = new Set(old);
+      if (read) updated.add(number);
+      else updated.delete(number);
+      return updated;
+    });
+  }
+
+  function readKey(href: string) {
+    return novelRef.current ? chapterFromHref(href) : tocHrefsRef.current.indexOf(href);
+  }
+
+  // Novels save read chapters in the database; EPUBs keep them in nyxa.json.
+  useEffect(() => {
+    if (!bookFileRef.current || !readChapters) return;
+    load("nyxa.json").then((store) => store.set(`read ${bookFileRef.current}`, [...readChapters]));
+  }, [readChapters]);
+
+  function readUpToHere() {
+    const index = lastIndexRef.current;
+    if (index === null) return;
+    const novel = novelRef.current;
+    if (!novel) {
+      setReadChapters((old) => new Set([...(old ?? []), ...Array(index).keys()]));
+      return;
+    }
+    const current = novel.chapters[index].number;
+    markReadBefore(novel.novelId, current);
+    setReadChapters((old) => {
+      const updated = new Set(old);
+      for (const chapter of novel.chapters) {
+        if (chapter.number < current) updated.add(chapter.number);
+      }
+      return updated;
+    });
   }
 
   async function openBook(book: File | FoliateBook, position?: string) {
@@ -187,9 +237,17 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
         const index = e.detail.section?.current ?? 0;
         setPlace(novel.places[index] ?? "");
         saveNovelPosition(novel.novelId, novel.chapters[index].number, paragraphAt(e.detail.range));
+        const finished = finishedChapter(lastIndexRef.current, index);
+        lastIndexRef.current = index;
+        if (finished !== null) markRead(novel.chapters[finished].number, true);
       } else {
         setPlace("");
         savePosition(e.detail.cfi);
+        const index = tocHrefsRef.current.indexOf(e.detail.tocItem?.href ?? "");
+        if (index < 0) return;
+        const finished = finishedChapter(lastIndexRef.current, index);
+        lastIndexRef.current = index;
+        if (finished !== null) markRead(finished, true);
       }
     });
 
@@ -200,6 +258,11 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
     });
 
     await view.open(book);
+    // Same two levels Contents shows, so an EPUB chapter's number is its place in this list.
+    tocHrefsRef.current = (view.book.toc ?? []).flatMap((item) => [
+      item.href,
+      ...(item.subitems ?? []).map((sub) => sub.href),
+    ]);
     applySettings();
     setTitle(getTitle(view.book.metadata?.title) || (book instanceof File ? book.name : ""));
 
@@ -240,6 +303,16 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
             setShowContents(false);
           }}
           onClose={() => setShowContents(false)}
+          isRead={(href) => readChapters?.has(readKey(href)) ?? false}
+          onToggleRead={
+            readChapters
+              ? (href) => {
+                const number = readKey(href);
+                markRead(number, !readChapters.has(number));
+              }
+              : undefined
+          }
+          onReadUpToHere={readChapters ? readUpToHere : undefined}
         />
       )}
 

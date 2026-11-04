@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { sources } from "./sources";
 import type { NovelItem, SourceNovel } from "./sources/types";
-import { listNovels, saveNovel, type LibraryRow } from "./library/db";
 import { downloadChapters, type Progress } from "./library/download";
+import { listNovels, saveNovel, setAllRead, type LibraryRow } from "./library/db";
+
 
 
 const source = sources[0];
@@ -72,6 +73,15 @@ function Browse({ onRead }: { onRead: (novelId: number) => void }) {
     }
   }
 
+  const libraryRow = library.find((row) => row.id === libraryId);
+  const allRead = libraryRow?.unread === 0;
+
+  async function readItAll() {
+    if (!libraryId) return;
+    await setAllRead(libraryId, !allRead);
+    setLibrary(await listNovels());
+  }
+
   async function addToLibrary() {
     if (!novel) return;
     setStatus("Saving…");
@@ -111,10 +121,16 @@ function Browse({ onRead }: { onRead: (novelId: number) => void }) {
             {library.map((row) => (
               <li key={row.id}>
                 <button onClick={() => onRead(row.id)}>📖 {row.name} · Read: {row.last_chapter ?? 0} / {row.total.toLocaleString()}</button>
+
+                {row.unread > 0 ? (
+                  <span className="unread">{row.unread} unread</span>
+                ) : (
+                  <span className="read-badge">Read</span>
+                )}
               </li>
             ))}
           </ul>
-         </div>
+        </div>
       )}
 
       {!novel && (
@@ -130,7 +146,9 @@ function Browse({ onRead }: { onRead: (novelId: number) => void }) {
       {novel && (
         <div className="novel-page">
           <button onClick={() => setNovel(null)}>◀ Results</button>
-          <h2>{novel.name}</h2>
+          <h2>
+            {novel.name} {allRead && <span className="read-badge">Read</span>}
+          </h2>
           <p className="novel-author">{novel.author}</p>
           <p className="novel-summary">{novel.summary}</p>
           <p>{novel.chapters?.length ?? 0} chapters</p>
@@ -138,6 +156,16 @@ function Browse({ onRead }: { onRead: (novelId: number) => void }) {
           {libraryId && (
             <div className="download">
               <button onClick={() => onRead(libraryId)}>📖 Read</button>
+              <button className="toggle" aria-pressed={allRead} onClick={readItAll}>
+                Read it all
+                <span className="tick">
+                  {allRead && (
+                    <svg viewBox="0 0 16 16" aria-hidden="true">
+                      <path d="M3 8.5 L6.5 12 L13 4.5" />
+                    </svg>
+                  )}
+                </span>
+              </button>
               <button onClick={() => download(50)} disabled={downloading}>Download 50 chapters</button>
               {downloading && <button onClick={() => (stopRef.current = true)}>Stop</button>}
               {progress && (
@@ -149,6 +177,7 @@ function Browse({ onRead }: { onRead: (novelId: number) => void }) {
                 </p>
               )}
             </div>
+            
           )}
 
           <ol className="novel-chapters">

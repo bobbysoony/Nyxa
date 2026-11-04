@@ -3,7 +3,7 @@ import { groupVolumes } from "./novelBook";
 import type { ChapterRow } from "./db";
 
 function chapter(number: number, name = `Chapter ${number}`, volume: string | null = null): ChapterRow {
-  return { id: number, novel_id: 1, number, name, path: "", volume, downloaded: 1 };
+  return { id: number, novel_id: 1, number, name, path: "", volume, downloaded: 1, read: 0 };
 }
 
 test("uses the site's volumes when it has them", () => {

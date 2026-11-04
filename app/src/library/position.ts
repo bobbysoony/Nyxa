@@ -32,3 +32,7 @@ export function paragraphAt(range?: Range) {
   const next = paragraphs[index + 1];
   return next && range.intersectsNode(next) ? index + 1 : index;
 }
+
+export function chapterFromHref(href: string) {
+  return Number(href.split("#")[0].replace("chapter-", ""));
+}

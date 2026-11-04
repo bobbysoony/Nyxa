@@ -290,3 +290,47 @@ body {
 .contents-item.current {
   outline: 2px solid var(--text);
 }
+
+:root {
+  --done: #3a9d5d;
+}
+
+.contents-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.contents-row .contents-item {
+  flex: 1;
+  min-width: 0;
+}
+
+.read-tick {
+  padding: 0.3em 0.6em;
+  opacity: 0.4;
+}
+
+.read-tick.read {
+  opacity: 1;
+  color: white;
+  background: var(--done);
+  border-color: var(--done);
+}
+
+.unread {
+  margin-left: 8px;
+  font-size: 0.85em;
+  opacity: 0.75;
+}
+
+.read-badge {
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  color: white;
+  background: var(--done);
+  font-size: 0.75em;
+  font-weight: 600;
+  vertical-align: middle;
+}
