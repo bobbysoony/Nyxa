@@ -11,7 +11,8 @@
     "cable": "%LOCALAPPDATA%\\Android\\Sdk\\platform-tools\\adb.exe reverse tcp:1420 tcp:1420 && %LOCALAPPDATA%\\Android\\Sdk\\platform-tools\\adb.exe reverse tcp:1421 tcp:1421",
     "phone": "npm run cable && tauri android dev --host 127.0.0.1",
     "test": "vitest run",
-    "version:set": "powershell -ExecutionPolicy Bypass -File .\\scripts\\set-version.ps1"
+    "version:set": "powershell -ExecutionPolicy Bypass -File .\\scripts\\set-version.ps1",
+    "save": "node scripts/save.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
