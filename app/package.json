@@ -12,7 +12,8 @@
     "phone": "npm run cable && tauri android dev --host 127.0.0.1",
     "test": "vitest run",
     "version:set": "powershell -ExecutionPolicy Bypass -File .\\scripts\\set-version.ps1",
-    "save": "node scripts/save.mjs"
+    "save": "node scripts/save.mjs",
+    "pull": "node scripts/pull.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
