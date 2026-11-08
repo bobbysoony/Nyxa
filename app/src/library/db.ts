@@ -131,3 +131,47 @@ export async function setAllRead(novelId: number, read: boolean) {
   const db = await getDb();
   await db.execute("UPDATE chapters SET read = $1 WHERE novel_id = $2", [read ? 1 : 0, novelId]);
 }
+
+export type BookRow = {
+  id: number;
+  key: string;
+  file: string;
+  title: string;
+  position: string | null;
+  read: string; // a JSON list, like "[0,1,2]"
+};
+
+export async function getBook(id: number) {
+  const db = await getDb();
+  const rows = await db.select<BookRow[]>("SELECT * FROM books WHERE id = $1", [id]);
+  return rows[0] ?? null;
+}
+
+export async function getBookByKey(key: string) {
+  const db = await getDb();
+  const rows = await db.select<BookRow[]>("SELECT * FROM books WHERE key = $1", [key]);
+  return rows[0] ?? null;
+}
+
+// A new book gets a new row; a book that's already there keeps its row
+// (and its place and ticks), with the file and title brought up to date.
+export async function saveBook(key: string, file: string, title: string) {
+  const db = await getDb();
+  await db.execute(
+    `INSERT INTO books (key, file, title) VALUES ($1, $2, $3)
+     ON CONFLICT (key) DO UPDATE SET file = excluded.file, title = excluded.title`,
+    [key, file, title],
+  );
+  const rows = await db.select<{ id: number }[]>("SELECT id FROM books WHERE key = $1", [key]);
+  return rows[0].id;
+}
+
+export async function saveBookPosition(id: number, position: string) {
+  const db = await getDb();
+  await db.execute("UPDATE books SET position = $1 WHERE id = $2", [position, id]);
+}
+
+export async function saveBookRead(id: number, read: number[]) {
+  const db = await getDb();
+  await db.execute("UPDATE books SET read = $1 WHERE id = $2", [JSON.stringify(read), id]);
+}

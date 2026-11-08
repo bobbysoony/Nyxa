@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
-import { BaseDirectory, exists, mkdir, readFile, writeFile } from "@tauri-apps/plugin-fs";
+import { readFile } from "@tauri-apps/plugin-fs";
 import { load } from "@tauri-apps/plugin-store";
 import "../foliate-js/view.js";
 import SettingsPanel from "./SettingsPanel";
@@ -10,14 +10,17 @@ import { tapZone } from "./taps";
 import type { FoliateBook, FoliateView } from "./foliate";
 import { makeNovelBook, type NovelBook } from "./library/novelBook";
 import Contents from "./Contents.tsx";
-import { getNovel, markReadBefore, saveNovelPosition, setChapterRead } from "./library/db";
+import {
+  getNovel,
+  markReadBefore,
+  saveBookPosition,
+  saveBookRead,
+  saveNovelPosition,
+  setChapterRead,
+} from "./library/db";
+import { addBook, loadBook, moveOldBooks } from "./library/book";
 import { chapterFromHref, paragraphAt, positionHref } from "./library/position";
 import { finishedChapter } from "./library/finished";
-
-type SavedBook = {
-  file: string;
-  position: string;
-};
 
 type ReaderProps = {
   settings: Settings;
@@ -28,7 +31,7 @@ type ReaderProps = {
 function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<FoliateView | null>(null);
-  const bookFileRef = useRef("");
+  const bookIdRef = useRef<number | null>(null);
   const novelRef = useRef<NovelBook | null>(null);
   const lastIndexRef = useRef<number | null>(null);
   const tocHrefsRef = useRef<string[]>([]);
@@ -79,9 +82,14 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
+    start();
+  }, []);
+
+  async function start() {
+    await moveOldBooks();
     if (novelId) openNovel(novelId);
     else reopenLastBook();
-  }, []);
+  }
 
   useEffect(() => {
     applySettings();
@@ -103,29 +111,27 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
       });
       if (!path) return;
 
-      const epubContent = await readFile(path);
-      const fileName = `books/${Date.now()}.epub`;
-      await mkdir("books", { baseDir: BaseDirectory.AppData, recursive: true });
-      await writeFile(fileName, epubContent, { baseDir: BaseDirectory.AppData });
-
-      bookFileRef.current = fileName;
-      novelRef.current = null;
-      lastIndexRef.current = null;
-      setReadChapters(new Set());
-      const store = await load("nyxa.json");
-      await store.set("lastNovel", null);
-      await openBook(new File([epubContent], fileName));
-
+      const id = await addBook(await readFile(path));
+      await openEpub(id);
     } catch (err) {
       setError("Failed to open book");
       console.error(err);
     }
   }
 
-  async function savePosition(position: string) {
-    if (!bookFileRef.current) return;
+  async function openEpub(id: number) {
+    const loaded = await loadBook(id);
+    if (!loaded) return false;
+
+    bookIdRef.current = id;
+    novelRef.current = null;
+    lastIndexRef.current = null;
+    setReadChapters(new Set(JSON.parse(loaded.row.read)));
     const store = await load("nyxa.json");
-    await store.set("lastBook", { file: bookFileRef.current, position });
+    await store.set("lastNovel", null);
+    await store.set("lastBookId", id);
+    await openBook(loaded.book, loaded.row.position ?? undefined);
+    return true;
   }
 
   async function reopenLastBook(epubOnly = false) {
@@ -136,19 +142,9 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
         await openNovel(lastNovel);
         return;
       }
-      const saved = await store.get<SavedBook>("lastBook");
-      if (!saved) return;
+      const lastBookId = await store.get<number>("lastBookId");
+      if (!lastBookId || !(await openEpub(lastBookId))) return;
 
-      const stillThere = await exists(saved.file, { baseDir: BaseDirectory.AppData });
-      if (!stillThere) return;
-
-      const epubContent = await readFile(saved.file, { baseDir: BaseDirectory.AppData });
-      bookFileRef.current = saved.file;
-      novelRef.current = null;
-      lastIndexRef.current = null;
-      setReadChapters(new Set(await store.get<number[]>(`read ${saved.file}`)));
-      await store.set("lastNovel", null);
-      await openBook(new File([epubContent], saved.file), saved.position);
       setWelcome("Welcome back! Picking up where you left off.");
       setTimeout(() => setWelcome(""), 3000);
     } catch (err) {
@@ -158,7 +154,7 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
   }
 
   async function openNovel(id: number) {
-    bookFileRef.current = "";
+    bookIdRef.current = null;
     const book = await makeNovelBook(id);
     if (!book) {
       setError("This novel has no chapters yet");
@@ -195,10 +191,10 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
     return novelRef.current ? chapterFromHref(href) : tocHrefsRef.current.indexOf(href);
   }
 
-  // Novels save read chapters in the database; EPUBs keep them in nyxa.json.
+  // Novels save each tick as it happens (markRead); an EPUB saves its whole list.
   useEffect(() => {
-    if (!bookFileRef.current || !readChapters) return;
-    load("nyxa.json").then((store) => store.set(`read ${bookFileRef.current}`, [...readChapters]));
+    if (!bookIdRef.current || !readChapters) return;
+    saveBookRead(bookIdRef.current, [...readChapters]);
   }, [readChapters]);
 
   function readUpToHere() {
@@ -242,7 +238,7 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
         if (finished !== null) markRead(novel.chapters[finished].number, true);
       } else {
         setPlace("");
-        savePosition(e.detail.cfi);
+        if (bookIdRef.current) saveBookPosition(bookIdRef.current, e.detail.cfi);
         const index = tocHrefsRef.current.indexOf(e.detail.tocItem?.href ?? "");
         if (index < 0) return;
         const finished = finishedChapter(lastIndexRef.current, index);
@@ -267,7 +263,8 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
     setTitle(getTitle(view.book.metadata?.title) || (book instanceof File ? book.name : ""));
 
     if (position) {
-      await view.init({ lastLocation: position });
+      // A place saved in another version of this book may not fit this one: start at the top.
+      await view.init({ lastLocation: position }).catch(() => view.init({ showTextStart: true }));
     } else {
       await view.init({ showTextStart: true });
     }

@@ -30,7 +30,7 @@ export type FoliateSection = {
 };
 
 export type FoliateBook = {
-  metadata?: { title?: string | Record<string, string> };
+  metadata?: { title?: string | Record<string, string>; identifier?: string };
   toc?: TocItem[];
   sections?: FoliateSection[];
   resolveHref?(href: string): { index: number; anchor(doc: Document): Element | number | null } | null;

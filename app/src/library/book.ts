@@ -1,0 +1,67 @@
+import { BaseDirectory, exists, mkdir, readDir, readFile, remove, writeFile } from "@tauri-apps/plugin-fs";
+import { load } from "@tauri-apps/plugin-store";
+import { makeBook } from "../../foliate-js/view.js";
+import type { FoliateBook } from "../foliate";
+import { getTitle } from "../getTitle";
+import { bookKey, type Bytes } from "./bookKey";
+import { getBook, getBookByKey, saveBook, saveBookPosition, saveBookRead } from "./db";
+
+const appData = { baseDir: BaseDirectory.AppData };
+
+async function readBook(bytes: Bytes) {
+  const book = (await makeBook(new File([bytes], "book.epub"))) as FoliateBook;
+  const key = await bookKey(book, bytes);
+  return { book, key, title: getTitle(book.metadata?.title) || "Untitled" };
+}
+
+// Adds an EPUB to the library, or finds it if it's already there,
+// so opening the same book again keeps its place and its ticks.
+export async function addBook(bytes: Bytes) {
+  const { key, title } = await readBook(bytes);
+  const old = await getBookByKey(key);
+  const file = old?.file ?? `books/${Date.now()}.epub`;
+  await mkdir("books", { ...appData, recursive: true });
+  await writeFile(file, bytes, appData);
+  return saveBook(key, file, title);
+}
+
+// The book in a library row, ready for foliate. null if its file is gone.
+export async function loadBook(id: number) {
+  const row = await getBook(id);
+  if (!row || !(await exists(row.file, appData))) return null;
+  const { book } = await readBook(await readFile(row.file, appData));
+  return { row, book };
+}
+
+// Moves books from the old nyxa.json store to the new library table.
+export async function moveOldBooks() {
+  const store = await load("nyxa.json");
+  if (await store.get("booksMoved")) return;
+
+  const last = await store.get<{ file: string; position: string }>("lastBook");
+  const entries = (await exists("books", appData)) ? await readDir("books", appData) : [];
+  // The names are Date.now() numbers, so sorting puts the oldest copy first.
+  const files = entries.map((e) => `books/${e.name}`).filter((f) => f.endsWith(".epub")).sort();
+
+  for (const file of files) {
+    try {
+      const { key, title } = await readBook(await readFile(file, appData));
+      const older = await getBookByKey(key);
+      const id = await saveBook(key, file, title); // the newest copy wins
+      if (older && older.file !== file) await remove(older.file, appData);
+
+      const ticks = await store.get<number[]>(`read ${file}`);
+      const read = new Set<number>([...JSON.parse(older?.read ?? "[]"), ...(ticks ?? [])]);
+      await saveBookRead(id, [...read]);
+      if (last?.file === file) {
+        await saveBookPosition(id, last.position);
+        await store.set("lastBookId", id);
+      }
+      await store.delete(`read ${file}`);
+    } catch (err) {
+      console.error(`Couldn't move ${file}`, err);
+    }
+  }
+  await store.delete("lastBook");
+  await store.set("booksMoved", true);
+}

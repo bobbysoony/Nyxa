@@ -1,0 +1,8 @@
+CREATE TABLE books (
+  id INTEGER PRIMARY KEY,
+  key TEXT NOT NULL UNIQUE,
+  file TEXT NOT NULL,
+  title TEXT NOT NULL,
+  position TEXT,
+  read TEXT NOT NULL DEFAULT '[]'
+);
