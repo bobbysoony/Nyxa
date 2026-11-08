@@ -121,7 +121,7 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
 
   async function openEpub(id: number) {
     const loaded = await loadBook(id);
-    if (!loaded) return false;
+    if (!loaded) return null;
 
     bookIdRef.current = id;
     novelRef.current = null;
@@ -131,7 +131,7 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
     await store.set("lastNovel", null);
     await store.set("lastBookId", id);
     await openBook(loaded.book, loaded.row.position ?? undefined);
-    return true;
+    return loaded.row.title;
   }
 
   async function reopenLastBook(epubOnly = false) {
@@ -143,9 +143,10 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
         return;
       }
       const lastBookId = await store.get<number>("lastBookId");
-      if (!lastBookId || !(await openEpub(lastBookId))) return;
+      const title = lastBookId ? await openEpub(lastBookId) : null;
+      if (!title) return;
 
-      setWelcome("Welcome back! Picking up where you left off.");
+      setWelcome(`Welcome back to ${title}!`);
       setTimeout(() => setWelcome(""), 3000);
     } catch (err) {
       setError("Failed to reopen last book");
