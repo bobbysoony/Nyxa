@@ -421,3 +421,7 @@ body {
 .library-status {
   padding: 16px;
 }
+
+.reader-time-left {
+  opacity: 0.7;
+}

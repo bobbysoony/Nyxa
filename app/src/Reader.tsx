@@ -21,6 +21,8 @@ import {
 import { addBook, loadBook, tocHrefs } from "./library/books";
 import { chapterFromHref, paragraphAt, positionHref } from "./library/position";
 import { finishedChapter } from "./library/finished";
+import { timeLeft, wordsLeft } from "./library/timeleft";
+
 
 type ReaderProps = {
   settings: Settings;
@@ -48,6 +50,7 @@ function Reader({ settings, onSettingsChange, novelId, bookId }: ReaderProps) {
   const [downloaded, setDownloaded] = useState<number | null>(null);
   const [place, setPlace] = useState("");
   const [readChapters, setReadChapters] = useState<Set<number> | null>(null);
+  const [words, setWords] = useState(0);
 
 
   function handleKey(e: KeyboardEvent) {
@@ -229,6 +232,7 @@ function Reader({ settings, onSettingsChange, novelId, bookId }: ReaderProps) {
     view.addEventListener("relocate", (e) => {
       setChapter(e.detail.tocItem?.label ?? "");
       setProgress(Math.round((e.detail.fraction ?? 0) * 100));
+      setWords(wordsLeft(e.detail.range));
 
       const novel = novelRef.current;
       if (novel) {
@@ -268,6 +272,8 @@ function Reader({ settings, onSettingsChange, novelId, bookId }: ReaderProps) {
       await view.init({ showTextStart: true });
     }
   }
+
+  const left = timeLeft(words, settings.wordsPerMinute);
 
   return (
     <div className={barsHidden ? "reader bars-hidden" : "reader"}>
@@ -318,6 +324,7 @@ function Reader({ settings, onSettingsChange, novelId, bookId }: ReaderProps) {
         <button onClick={() => viewRef.current?.prev()}>◀ Back</button>
         <span>
           {place || chapter} {progress}%
+          {settings.showTimeLeft && left && <span className="reader-time-left"> · {left}</span>}
         </span>
         <button onClick={() => viewRef.current?.next()}>Next ▶</button>
       </div>

@@ -9,11 +9,13 @@ export const library: Place = { screen: "library", novelId: null, bookId: null }
 export const reader: Place = { screen: "reader", novelId: null, bookId: null };
 export const browse: Place = { screen: "browse", novelId: null, bookId: null };
 
-// Going somewhere puts it on top of the pile. Going where you already are adds nothing.
+// Going somewhere new puts it on top of the pile. Going somewhere already in the pile cuts back to it.
 export function goTo(places: Place[], next: Place): Place[] {
-  const here = places[places.length - 1];
-  const same = here.screen === next.screen && here.novelId === next.novelId && here.bookId === next.bookId;
-  return same ? places : [...places, next];
+  const index = places.findIndex(
+    (place) => place.screen === next.screen && place.novelId === next.novelId && place.bookId === next.bookId,
+  );
+  if (index === -1) return [...places, next];
+  return index === places.length - 1 ? places : places.slice(0, index + 1);
 }
 
 // Back takes the top place off. With only one left there's nowhere to go back to.

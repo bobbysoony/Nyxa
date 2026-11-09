@@ -68,6 +68,23 @@ function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
         </span>
       </button>
 
+      <button
+        className="toggle"
+        aria-pressed={settings.showTimeLeft}
+        onClick={() =>
+          onChange({ ...settings, showTimeLeft: !settings.showTimeLeft })
+        }
+      >
+        Show time left
+        <span className="tick">
+          {settings.showTimeLeft && (
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M3 8.5 L6.5 12 L13 4.5" />
+            </svg>
+          )}
+        </span>
+      </button>
+
       <label>
         Text size: {settings.fontSize}px
         <input
@@ -102,6 +119,19 @@ function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
           value={settings.lineHeight}
           onChange={(e) =>
             onChange({ ...settings, lineHeight: Number(e.target.value) })
+          }
+        />
+      </label>
+      <label>
+        Reading speed: {settings.wordsPerMinute} words a minute
+        <input
+          type="range"
+          min="100"
+          max="600"
+          step="10"
+          value={settings.wordsPerMinute}
+          onChange={(e) =>
+            onChange({ ...settings, wordsPerMinute: Number(e.target.value) })
           }
         />
       </label>

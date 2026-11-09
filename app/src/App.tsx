@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { load } from "@tauri-apps/plugin-store";
 import { exit, onBackButtonPress } from "@tauri-apps/api/app";
 import Reader from "./Reader";
@@ -12,34 +12,35 @@ function App() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [places, setPlaces] = useState<Place[]>([library]);
   const place = places[places.length - 1];
+  const latestPlaces = useRef(places); // lets the once-only Back listeners see the current pile
 
   useEffect(() => {
     loadSettings();
   }, []);
 
   useEffect(() => {
+    latestPlaces.current = places;
+  }, [places]);
+
+  useEffect(() => {
     if (!navigator.userAgent.includes("Android")) return; // only phones have a Back button
     const listener = onBackButtonPress(() => {
-      const before = goBack(places);
-      if (before) setPlaces(before);
-      else exit(0);
+      if (!back()) exit(0);
     });
     return () => {
       listener.then((l) => l.unregister());
     };
-  }, [places]);
+  }, []);
 
   useEffect(() => {
     function handleMouseUp(event: MouseEvent) {
       if (event.button !== 3) return; // 3 is the mouse's Back button
-      const before = goBack(places);
-      if (before) setPlaces(before);
+      back();
     }
 
     window.addEventListener("mouseup", handleMouseUp);
     return () => window.removeEventListener("mouseup", handleMouseUp);
-  }, [places]);
-
+  }, []);
 
   useEffect(() => {
     if (!settings) return;
@@ -64,6 +65,13 @@ function App() {
     setPlaces(goTo(places, next));
   }
 
+  // Returns false when there's nowhere left to go back to.
+  function back() {
+    const before = goBack(latestPlaces.current);
+    if (before) setPlaces(before);
+    return before !== null;
+  }
+
   function readNovel(id: number) {
     go({ ...reader, novelId: id });
   }
@@ -80,7 +88,6 @@ function App() {
         <button className={place.screen === "library" ? "active" : ""} onClick={() => go(library)}>Library</button>
         <button className={place.screen === "reader" ? "active" : ""} onClick={() => go(reader)}>Reader</button>
         <button className={place.screen === "browse" ? "active" : ""} onClick={() => go(browse)}>Browse</button>
-
       </nav>
       {place.screen === "library" && <Library onReadNovel={readNovel} onReadBook={readBook} />}
       {place.screen === "reader" && (

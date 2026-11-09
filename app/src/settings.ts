@@ -6,6 +6,8 @@ export type Settings = {
   margin: number;
   theme: string;
   readingMode: string;
+  wordsPerMinute: number;
+  showTimeLeft: boolean;
 };
 
 // What Nyxa uses until you change something.
@@ -15,7 +17,9 @@ export const defaultSettings: Settings = {
   lineHeight: 1.5,
   margin: 7,
   theme: "night",
-  readingMode: "paginated"
+  readingMode: "paginated",
+  wordsPerMinute: 250,
+  showTimeLeft: true
 };
 
 type Theme = {

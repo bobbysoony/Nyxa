@@ -11,6 +11,11 @@ test("going where you already are adds nothing", () => {
   expect(goTo(places, { ...reader, novelId: 1 })).toHaveLength(3);
 });
 
+test("going somewhere already in the pile cuts back to it", () => {
+  expect(goTo([library, reader, browse], library)).toEqual([library]);
+  expect(goTo([library, reader, browse], reader)).toEqual([library, reader]);
+});
+
 test("back takes the top off, until only one is left", () => {
   expect(goBack([library, reader, browse])).toEqual([library, reader]);
   expect(goBack([library])).toBeNull();
