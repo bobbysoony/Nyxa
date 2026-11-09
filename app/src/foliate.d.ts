@@ -36,6 +36,7 @@ export type FoliateBook = {
   resolveHref?(href: string): { index: number; anchor(doc: Document): Element | number | null } | null;
   splitTOCHref?(href: string): string[];
   getTOCFragment?(doc: Document, fragment: string): Element | null;
+  getCover?(): Promise<Blob | null>;
 };
 
 export interface FoliateView extends HTMLElement {

@@ -3,6 +3,7 @@ import { sources } from "./sources";
 import type { NovelItem, SourceNovel } from "./sources/types";
 import { downloadChapters, type Progress } from "./library/download";
 import { listNovels, saveNovel, setAllRead, type LibraryRow } from "./library/db";
+import { downloadCover } from "./library/covers";
 
 const source = sources[0];
 
@@ -85,6 +86,7 @@ function Browse({ onRead }: { onRead: (novelId: number) => void }) {
     setStatus("Saving…");
     try {
       const id = await saveNovel(source.id, novel);
+      if (novel.cover) downloadCover(`novel-${id}`, novel.cover).catch(console.error);
       setLibraryId(id);
       setLibrary(await listNovels());
       setStatus(`Saved with ${novel.chapters?.length ?? 0} chapters`);

@@ -4,7 +4,8 @@ import { makeBook } from "../../foliate-js/view.js";
 import type { FoliateBook } from "../foliate";
 import { getTitle } from "../getTitle";
 import { bookKey, type Bytes } from "./bookKey";
-import { getBook, getBookByKey, saveBook, saveBookPosition, saveBookRead } from "./db";
+import { saveCover } from "./covers";
+import { getBook, getBookByKey, listBooks, saveBook, saveBookChapters, saveBookPosition, saveBookRead } from "./db";
 
 const appData = { baseDir: BaseDirectory.AppData };
 
@@ -12,6 +13,10 @@ async function readBook(bytes: Bytes) {
   const book = (await makeBook(new File([bytes], "book.epub"))) as FoliateBook;
   const key = await bookKey(book, bytes);
   return { book, key, title: getTitle(book.metadata?.title) || "Untitled" };
+}
+
+export function tocHrefs(book: FoliateBook) {
+  return (book.toc ?? []).flatMap((item) => [item.href, ...(item.subitems ?? []).map((sub) => sub.href)]);
 }
 
 // Adds an EPUB to the library, or finds it if it's already there,
@@ -31,6 +36,23 @@ export async function loadBook(id: number) {
   if (!row || !(await exists(row.file, appData))) return null;
   const { book } = await readBook(await readFile(row.file, appData));
   return { row, book };
+}
+
+// A book the library hasn't looked inside yet (chapters is still 0) gets its cover
+// and its chapter count, once. That's every book the first time, then only new ones.
+export async function prepareBooks() {
+  for (const row of await listBooks()) {
+    if (row.chapters > 0) continue;
+    try {
+      const loaded = await loadBook(row.id);
+      if (!loaded) continue;
+      const cover = await loaded.book.getCover?.();
+      if (cover) await saveCover(`book-${row.id}`, cover);
+      await saveBookChapters(row.id, tocHrefs(loaded.book).length);
+    } catch (err) {
+      console.error(`Couldn't prepare ${row.title}`, err);
+    }
+  }
 }
 
 // Moves books from the old nyxa.json store to the new library table.

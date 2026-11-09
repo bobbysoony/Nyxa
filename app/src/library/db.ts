@@ -138,7 +138,8 @@ export type BookRow = {
   file: string;
   title: string;
   position: string | null;
-  read: string; // a JSON list, like "[0,1,2]"
+  read: string;
+  chapters: number; 
 };
 
 export async function getBook(id: number) {
@@ -169,6 +170,16 @@ export async function saveBook(key: string, file: string, title: string) {
 export async function saveBookPosition(id: number, position: string) {
   const db = await getDb();
   await db.execute("UPDATE books SET position = $1 WHERE id = $2", [position, id]);
+}
+
+export async function listBooks() {
+  const db = await getDb();
+  return db.select<BookRow[]>("SELECT * FROM books ORDER BY title");
+}
+
+export async function saveBookChapters(id: number, chapters: number) {
+  const db = await getDb();
+  await db.execute("UPDATE books SET chapters = $1 WHERE id = $2", [chapters, id]);
 }
 
 export async function saveBookRead(id: number, read: number[]) {

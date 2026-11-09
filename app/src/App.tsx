@@ -3,12 +3,14 @@ import { load } from "@tauri-apps/plugin-store";
 import Reader from "./Reader";
 import Browse from "./Browse";
 import { defaultSettings, Settings, getTheme } from "./settings";
+import Library from "./Library";
 import "./App.css";
 
 function App() {
   const [settings, setSettings] = useState<Settings | null>(null);
-  const [screen, setScreen] = useState<"reader" | "browse">("reader");
+  const [screen, setScreen] = useState<"library" | "reader" | "browse">("reader");
   const [novelId, setNovelId] = useState<number | null>(null);
+  const [bookId, setBookId] = useState<number | null>(null);
 
 
   useEffect(() => {
@@ -36,11 +38,19 @@ function App() {
 
   function readNovel(id: number) {
     setNovelId(id);
+    setBookId(null);
+    setScreen("reader");
+  }
+
+  function readBook(id: number) {
+    setBookId(id);
+    setNovelId(null);
     setScreen("reader");
   }
 
   function showReader() {
     setNovelId(null);
+    setBookId(null);
     setScreen("reader");
   }
 
@@ -49,14 +59,15 @@ function App() {
   return (
     <div className="app">
       <nav className="app-tabs">
+        <button onClick={() => setScreen("library")}>Library</button>
         <button onClick={showReader}>Reader</button>
         <button onClick={() => setScreen("browse")}>Browse</button>
       </nav>
-      {screen === "reader" ? (
-        <Reader settings={settings} onSettingsChange={changeSettings} novelId={novelId} />
-      ) : (
-        <Browse onRead={readNovel} />
+      {screen === "library" && <Library onReadNovel={readNovel} onReadBook={readBook} />}
+      {screen === "reader" && (
+        <Reader settings={settings} onSettingsChange={changeSettings} novelId={novelId} bookId={bookId} />
       )}
+      {screen === "browse" && <Browse onRead={readNovel} />}
     </div>
   );
 }

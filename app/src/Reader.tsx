@@ -18,7 +18,7 @@ import {
   saveNovelPosition,
   setChapterRead,
 } from "./library/db";
-import { addBook, loadBook, moveOldBooks } from "./library/book";
+import { addBook, loadBook, moveOldBooks, tocHrefs } from "./library/books";
 import { chapterFromHref, paragraphAt, positionHref } from "./library/position";
 import { finishedChapter } from "./library/finished";
 
@@ -26,9 +26,10 @@ type ReaderProps = {
   settings: Settings;
   onSettingsChange: (settings: Settings) => void;
   novelId: number | null;
+  bookId: number | null;
 };
 
-function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
+function Reader({ settings, onSettingsChange, novelId, bookId }: ReaderProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<FoliateView | null>(null);
   const bookIdRef = useRef<number | null>(null);
@@ -88,6 +89,7 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
   async function start() {
     await moveOldBooks();
     if (novelId) openNovel(novelId);
+    else if (bookId) openEpub(bookId);
     else reopenLastBook();
   }
 
@@ -256,10 +258,7 @@ function Reader({ settings, onSettingsChange, novelId }: ReaderProps) {
 
     await view.open(book);
     // Same two levels Contents shows, so an EPUB chapter's number is its place in this list.
-    tocHrefsRef.current = (view.book.toc ?? []).flatMap((item) => [
-      item.href,
-      ...(item.subitems ?? []).map((sub) => sub.href),
-    ]);
+    tocHrefsRef.current = tocHrefs(view.book);
     applySettings();
     setTitle(getTitle(view.book.metadata?.title) || (book instanceof File ? book.name : ""));
 
