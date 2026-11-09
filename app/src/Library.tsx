@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { listBooks, listNovels } from "./library/db";
-import { prepareBooks } from "./library/books";
+import { moveOldBooks, prepareBooks } from "./library/books";
 import { coverLink } from "./library/covers";
 
 // One cover in the grid: a novel or an EPUB, the library treats them the same.
@@ -19,7 +19,7 @@ type LibraryProps = {
 };
 
 function progressText(read: number, total: number) {
-  return total > 0 ? `${read} / ${total} read` : "";
+  return total > 0 ? `${read.toLocaleString()} / ${total.toLocaleString()} read` : "";
 }
 
 function Library({ onReadNovel, onReadBook }: LibraryProps) {
@@ -36,6 +36,7 @@ function Library({ onReadNovel, onReadBook }: LibraryProps) {
   }, []);
 
   async function loadTiles() {
+    await moveOldBooks();
     await prepareBooks();
     const tiles: Tile[] = [];
     for (const novel of await listNovels()) {
@@ -51,12 +52,13 @@ function Library({ onReadNovel, onReadBook }: LibraryProps) {
     }
     for (const book of await listBooks()) {
       const name = `book-${book.id}`;
+      const ticks: number[] = JSON.parse(book.read);
       tiles.push({
         name,
         title: book.title,
         cover: await coverLink(name),
-        finished: book.chapters > 0 && JSON.parse(book.read).length >= book.chapters,
-        progress: progressText(JSON.parse(book.read).length, book.chapters),
+        finished: book.chapters > 0 && ticks.length >= book.chapters,
+        progress: progressText(ticks.length, book.chapters),
         open: () => onReadBook(book.id),
       });
     }

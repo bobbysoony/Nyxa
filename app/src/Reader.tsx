@@ -18,7 +18,7 @@ import {
   saveNovelPosition,
   setChapterRead,
 } from "./library/db";
-import { addBook, loadBook, moveOldBooks, tocHrefs } from "./library/books";
+import { addBook, loadBook, tocHrefs } from "./library/books";
 import { chapterFromHref, paragraphAt, positionHref } from "./library/position";
 import { finishedChapter } from "./library/finished";
 
@@ -86,8 +86,7 @@ function Reader({ settings, onSettingsChange, novelId, bookId }: ReaderProps) {
     start();
   }, []);
 
-  async function start() {
-    await moveOldBooks();
+  function start() {
     if (novelId) openNovel(novelId);
     else if (bookId) openEpub(bookId);
     else reopenLastBook();

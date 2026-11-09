@@ -1,21 +1,45 @@
 import { useEffect, useState } from "react";
 import { load } from "@tauri-apps/plugin-store";
+import { exit, onBackButtonPress } from "@tauri-apps/api/app";
 import Reader from "./Reader";
 import Browse from "./Browse";
-import { defaultSettings, Settings, getTheme } from "./settings";
 import Library from "./Library";
+import { defaultSettings, Settings, getTheme } from "./settings";
+import { Place, browse, goBack, goTo, library, reader } from "./places";
 import "./App.css";
 
 function App() {
   const [settings, setSettings] = useState<Settings | null>(null);
-  const [screen, setScreen] = useState<"library" | "reader" | "browse">("reader");
-  const [novelId, setNovelId] = useState<number | null>(null);
-  const [bookId, setBookId] = useState<number | null>(null);
-
+  const [places, setPlaces] = useState<Place[]>([library]);
+  const place = places[places.length - 1];
 
   useEffect(() => {
     loadSettings();
   }, []);
+
+  useEffect(() => {
+    if (!navigator.userAgent.includes("Android")) return; // only phones have a Back button
+    const listener = onBackButtonPress(() => {
+      const before = goBack(places);
+      if (before) setPlaces(before);
+      else exit(0);
+    });
+    return () => {
+      listener.then((l) => l.unregister());
+    };
+  }, [places]);
+
+  useEffect(() => {
+    function handleMouseUp(event: MouseEvent) {
+      if (event.button !== 3) return; // 3 is the mouse's Back button
+      const before = goBack(places);
+      if (before) setPlaces(before);
+    }
+
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => window.removeEventListener("mouseup", handleMouseUp);
+  }, [places]);
+
 
   useEffect(() => {
     if (!settings) return;
@@ -36,22 +60,16 @@ function App() {
     await store.set("settings", newSettings);
   }
 
+  function go(next: Place) {
+    setPlaces(goTo(places, next));
+  }
+
   function readNovel(id: number) {
-    setNovelId(id);
-    setBookId(null);
-    setScreen("reader");
+    go({ ...reader, novelId: id });
   }
 
   function readBook(id: number) {
-    setBookId(id);
-    setNovelId(null);
-    setScreen("reader");
-  }
-
-  function showReader() {
-    setNovelId(null);
-    setBookId(null);
-    setScreen("reader");
+    go({ ...reader, bookId: id });
   }
 
   if (!settings) return <p>Loading…</p>;
@@ -59,18 +77,18 @@ function App() {
   return (
     <div className="app">
       <nav className="app-tabs">
-        <button onClick={() => setScreen("library")}>Library</button>
-        <button onClick={showReader}>Reader</button>
-        <button onClick={() => setScreen("browse")}>Browse</button>
+        <button className={place.screen === "library" ? "active" : ""} onClick={() => go(library)}>Library</button>
+        <button className={place.screen === "reader" ? "active" : ""} onClick={() => go(reader)}>Reader</button>
+        <button className={place.screen === "browse" ? "active" : ""} onClick={() => go(browse)}>Browse</button>
+
       </nav>
-      {screen === "library" && <Library onReadNovel={readNovel} onReadBook={readBook} />}
-      {screen === "reader" && (
-        <Reader settings={settings} onSettingsChange={changeSettings} novelId={novelId} bookId={bookId} />
+      {place.screen === "library" && <Library onReadNovel={readNovel} onReadBook={readBook} />}
+      {place.screen === "reader" && (
+        <Reader settings={settings} onSettingsChange={changeSettings} novelId={place.novelId} bookId={place.bookId} />
       )}
-      {screen === "browse" && <Browse onRead={readNovel} />}
+      {place.screen === "browse" && <Browse onRead={readNovel} />}
     </div>
   );
 }
 
 export default App;
-
