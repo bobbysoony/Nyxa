@@ -103,7 +103,16 @@ jobs:
           echo "password=${{ secrets.ANDROID_KEY_PASSWORD }}" >> keystore.properties
 
       - name: Build the APK
-        run: npm run tauri android build -- --apk --target aarch64
+        run: |
+          for i in 1 2 3; do
+            npm run tauri android build -- --apk --target aarch64 && exit 0
+            if [ "$i" -eq 3 ]; then
+              echo "Android build failed after 3 attempts."
+              exit 1
+            fi
+            echo "Android build failed (attempt $i/3), retrying in 20s..."
+            sleep 20
+          done
         env:
           NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.2.12479018
 
