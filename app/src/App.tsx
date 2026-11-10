@@ -19,7 +19,7 @@ function App() {
 
   useEffect(() => {
     loadSettings();
-    checkForUpdates(setCheck);
+    checkOnOpen();
   }, []);
 
   useEffect(() => {
@@ -52,6 +52,15 @@ function App() {
     document.documentElement.style.setProperty("--page", theme.background);
     document.documentElement.style.setProperty("--text", theme.text);
   }, [settings]);
+
+  // At most once an hour, so opening Nyxa ten times doesn't ask every site ten times.
+  async function checkOnOpen() {
+    const store = await load("nyxa.json");
+    const last = (await store.get<number>("lastCheck")) ?? 0;
+    if (Date.now() - last < 60 * 60 * 1000) return;
+    await store.set("lastCheck", Date.now());
+    checkForUpdates(setCheck);
+  }
 
   async function loadSettings() {
     const store = await load("nyxa.json");
@@ -92,7 +101,9 @@ function App() {
         <button className={place.screen === "library" ? "active" : ""} onClick={() => go(library)}>Library</button>
         <button className={place.screen === "reader" ? "active" : ""} onClick={() => go(reader)}>Reader</button>
         <button className={place.screen === "browse" ? "active" : ""} onClick={() => go(browse)}>Browse</button>
-        <button className={place.screen === "updates" ? "active" : ""} onClick={() => go(updates)}>Updates</button>
+        <button className={place.screen === "updates" ? "active" : ""} onClick={() => go(updates)}>
+          Updates{check?.found ? ` (${check.found})` : ""}
+        </button>
 
       </nav>
       {place.screen === "library" && <Library onReadNovel={readNovel} onReadBook={readBook} found={check?.found ?? 0} />}
