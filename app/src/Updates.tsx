@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { ask } from "@tauri-apps/plugin-dialog";
 import { getNovel, listUpdates, saveNovelPosition, type UpdateRow } from "./library/db";
 import type { Check } from "./library/updates";
 
@@ -20,6 +19,7 @@ function checkText(check: Check | null) {
 
 function Updates({ check, onCheck, onRead }: UpdatesProps) {
   const [rows, setRows] = useState<UpdateRow[]>([]);
+  const [asking, setAsking] = useState<{ row: UpdateRow; current: number } | null>(null);
   const checking = check !== null && check.done < check.total;
 
   // Load again whenever a check finds more, so new chapters appear while you watch.
@@ -46,19 +46,15 @@ function Updates({ check, onCheck, onRead }: UpdatesProps) {
       return;
     }
 
-    const override = await ask(
-      `Your current place is chapter ${current}.\nMove it to "${row.name}"?`,
-      {
-        title: row.novel_name,
-        kind: "info",
-        okLabel: "Yes, move it",
-        cancelLabel: "No, keep my place",
-      },
-    );
+    setAsking({ row, current });
+  }
 
-    // "No" (or closing the box) leaves the saved place alone and opens the novel where you were.
-    if (override) await saveNovelPosition(row.novel_id, row.number, 0);
-    onRead(row.novel_id);
+  // "No" (or tapping outside the box) leaves the saved place alone and opens the novel where you were.
+  async function answer(override: boolean) {
+    if (!asking) return;
+    if (override) await saveNovelPosition(asking.row.novel_id, asking.row.number, 0);
+    setAsking(null);
+    onRead(asking.row.novel_id);
   }
 
   return (
@@ -78,6 +74,19 @@ function Updates({ check, onCheck, onRead }: UpdatesProps) {
           <span>{row.name}</span>
         </button>
       ))}
+      {asking && (
+        <>
+          <div className="backdrop" onClick={() => answer(false)}></div>
+          <div className="confirm">
+            <strong>{asking.row.novel_name}</strong>
+            <p>Your current place is chapter {asking.current}. Move it to "{asking.row.name}"?</p>
+            <div className="confirm-buttons">
+              <button onClick={() => answer(false)}>No, keep my place</button>
+              <button onClick={() => answer(true)}>Yes, move it</button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
