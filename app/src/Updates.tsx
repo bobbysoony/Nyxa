@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { listUpdates, saveNovelPosition, type UpdateRow } from "./library/db";
+import { ask } from "@tauri-apps/plugin-dialog";
+import { getNovel, listUpdates, saveNovelPosition, type UpdateRow } from "./library/db";
 import type { Check } from "./library/updates";
 
 type UpdatesProps = {
@@ -26,6 +27,40 @@ function Updates({ check, onCheck, onRead }: UpdatesProps) {
     listUpdates().then(setRows);
   }, [check?.found]);
 
+  // The Reader opens a novel at its saved place, so "start at this chapter" means
+  // changing the saved place first. Only do that if the person agrees.
+  async function openFromUpdate(row: UpdateRow) {
+    const novel = await getNovel(row.novel_id);
+    const current = novel?.last_chapter;
+
+    // Already on this chapter: nothing to override, keep the exact spot.
+    if (current === row.number) {
+      onRead(row.novel_id);
+      return;
+    }
+
+    // No saved place yet: nothing to lose, so start at this chapter.
+    if (!current) {
+      await saveNovelPosition(row.novel_id, row.number, 0);
+      onRead(row.novel_id);
+      return;
+    }
+
+    const override = await ask(
+      `Your current place is chapter ${current}.\nMove it to "${row.name}"?`,
+      {
+        title: row.novel_name,
+        kind: "info",
+        okLabel: "Yes, move it",
+        cancelLabel: "No, keep my place",
+      },
+    );
+
+    // "No" (or closing the box) leaves the saved place alone and opens the novel where you were.
+    if (override) await saveNovelPosition(row.novel_id, row.number, 0);
+    onRead(row.novel_id);
+  }
+
   return (
     <div className="updates">
       <div className="updates-bar">
@@ -37,11 +72,7 @@ function Updates({ check, onCheck, onRead }: UpdatesProps) {
         <button
           key={`${row.novel_id}-${row.number}`}
           className={row.read ? "updates-row" : "updates-row fresh"}
-          onClick={async () => {
-            // The Reader opens a novel at its saved place, so make that place the start of this chapter.
-            await saveNovelPosition(row.novel_id, row.number, 0);
-            onRead(row.novel_id);
-          }}
+          onClick={() => openFromUpdate(row)}
         >
           <span className="updates-novel">{row.novel_name}</span>
           <span>{row.name}</span>
