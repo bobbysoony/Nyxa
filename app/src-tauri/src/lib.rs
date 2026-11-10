@@ -49,6 +49,12 @@ fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/005_book_chapters.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 6,
+            description: "chapter found at",
+            sql: include_str!("../migrations/006_found_at.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 

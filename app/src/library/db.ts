@@ -52,19 +52,25 @@ export async function saveNovel(source: string, novel: SourceNovel) {
 
 // Saving 2,000 chapters one at a time would be 2,000 trips to Rust.
 // Instead we send them in batches of 100 rows per INSERT.
-async function saveChapterList(novelId: number, chapters: ChapterItem[]) {
+// Numbers start at `first`. foundAt is when an update check found them (lesson 21).
+export async function saveChapterList(
+  novelId: number,
+  chapters: ChapterItem[],
+  first = 1,
+  foundAt: number | null = null,
+) {
   const db = await getDb();
   for (let start = 0; start < chapters.length; start += 100) {
     const batch = chapters.slice(start, start + 100);
-    const values: (string | number)[] = [];
+    const values: (string | number | null)[] = [];
     const rows = batch.map((chapter, i) => {
       const n = values.length;
-      values.push(novelId, start + i + 1, chapter.name, chapter.path);
-      return `($${n + 1}, $${n + 2}, $${n + 3}, $${n + 4})`;
+      values.push(novelId, first + start + i, chapter.name, chapter.path, foundAt);
+      return `($${n + 1}, $${n + 2}, $${n + 3}, $${n + 4}, $${n + 5})`;
     });
 
     await db.execute(
-      `INSERT INTO chapters (novel_id, number, name, path)
+      `INSERT INTO chapters (novel_id, number, name, path, found_at)
        VALUES ${rows.join(", ")}
        ON CONFLICT (novel_id, number) DO UPDATE
        SET name = excluded.name, path = excluded.path`,
@@ -73,7 +79,7 @@ async function saveChapterList(novelId: number, chapters: ChapterItem[]) {
   }
 }
 
-export type LibraryRow = NovelRow & { total: number; unread: number };
+export type LibraryRow = NovelRow & { total: number; unread: number; fresh: number };
 
 export async function listNovels() {
   const db = await getDb();
@@ -82,12 +88,35 @@ export async function listNovels() {
        (SELECT COUNT(*) FROM chapters
         WHERE chapters.novel_id = novels.id) AS total,
        (SELECT COUNT(*) FROM chapters
-        WHERE chapters.novel_id = novels.id AND chapters.read = 0) AS unread
+        WHERE chapters.novel_id = novels.id AND chapters.read = 0) AS unread,
+       (SELECT COUNT(*) FROM chapters
+        WHERE chapters.novel_id = novels.id AND chapters.read = 0
+          AND chapters.found_at IS NOT NULL) AS fresh
      FROM novels
      ORDER BY name`,
   );
 }
 
+// One line of the Updates screen: a chapter an update check found, with its novel's name.
+export type UpdateRow = {
+  novel_id: number;
+  novel_name: string;
+  number: number;
+  name: string;
+  read: number;
+};
+
+export async function listUpdates() {
+  const db = await getDb();
+  return db.select<UpdateRow[]>(
+    `SELECT chapters.novel_id, novels.name AS novel_name,
+       chapters.number, chapters.name, chapters.read
+     FROM chapters JOIN novels ON novels.id = chapters.novel_id
+     WHERE chapters.found_at IS NOT NULL
+     ORDER BY chapters.found_at DESC, chapters.number DESC
+     LIMIT 200`,
+  );
+}
 
 export async function getChapters(novelId: number) {
   const db = await getDb();

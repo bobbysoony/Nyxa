@@ -1,6 +1,5 @@
-// Where you are in Nyxa, and the places you came through to get here.
 export type Place = {
-  screen: "library" | "reader" | "browse";
+  screen: "library" | "reader" | "browse" | "updates";
   novelId: number | null;
   bookId: number | null;
 };
@@ -8,6 +7,7 @@ export type Place = {
 export const library: Place = { screen: "library", novelId: null, bookId: null };
 export const reader: Place = { screen: "reader", novelId: null, bookId: null };
 export const browse: Place = { screen: "browse", novelId: null, bookId: null };
+export const updates: Place = { screen: "updates", novelId: null, bookId: null };
 
 // Going somewhere new puts it on top of the pile. Going somewhere already in the pile cuts back to it.
 export function goTo(places: Place[], next: Place): Place[] {

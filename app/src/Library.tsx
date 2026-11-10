@@ -10,19 +10,21 @@ type Tile = {
   cover: string | null;
   finished: boolean;
   progress: string;
+  fresh: number;
   open: () => void;
 };
 
 type LibraryProps = {
   onReadNovel: (id: number) => void;
   onReadBook: (id: number) => void;
+  found: number;
 };
 
 function progressText(read: number, total: number) {
   return total > 0 ? `${read.toLocaleString()} / ${total.toLocaleString()} read` : "";
 }
 
-function Library({ onReadNovel, onReadBook }: LibraryProps) {
+function Library({ onReadNovel, onReadBook, found }: LibraryProps) {
   const [tiles, setTiles] = useState<Tile[] | null>(null);
 
   useEffect(() => {
@@ -33,7 +35,7 @@ function Library({ onReadNovel, onReadBook }: LibraryProps) {
     });
     // blob: links hold the picture in memory until they're revoked, so free them when you leave.
     return () => links.forEach((link) => URL.revokeObjectURL(link));
-  }, []);
+  }, [found]);
 
   async function loadTiles() {
     await moveOldBooks();
@@ -47,6 +49,7 @@ function Library({ onReadNovel, onReadBook }: LibraryProps) {
         cover: await coverLink(name),
         finished: novel.total > 0 && novel.unread === 0,
         progress: progressText(novel.total - novel.unread, novel.total),
+        fresh: novel.fresh,
         open: () => onReadNovel(novel.id),
       });
     }
@@ -59,6 +62,7 @@ function Library({ onReadNovel, onReadBook }: LibraryProps) {
         cover: await coverLink(name),
         finished: book.chapters > 0 && ticks.length >= book.chapters,
         progress: progressText(ticks.length, book.chapters),
+        fresh: 0,
         open: () => onReadBook(book.id),
       });
     }
@@ -76,6 +80,7 @@ function Library({ onReadNovel, onReadBook }: LibraryProps) {
         <button key={tile.name} className="library-tile" onClick={tile.open}>
           <span className="library-cover">
             {tile.cover ? <img src={tile.cover} alt="" /> : <span className="library-no-cover">{tile.title}</span>}
+            {tile.fresh > 0 && <span className="library-new">{tile.fresh} new</span>}
             {tile.finished && (
               <span className="library-done" aria-label="Read">
                 <svg viewBox="0 0 16 16" aria-hidden="true">
