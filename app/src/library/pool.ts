@@ -60,9 +60,11 @@ export async function withRetry<T>(
   }
 }
 
+// A short reason a try failed, for people. When the site answered with an error code,
+// the source puts that number on the error as `status`.
 export function failReason(err: unknown) {
   const text = err instanceof Error ? err.message : String(err);
-  const status = Number(text.match(/^(\d{3}) /)?.[1]);
+  const status = err instanceof Error && "status" in err ? Number(err.status) : 0;
   if (status === 429) return "too many requests (429)";
   if (status === 403) return "the site blocked it (403)";
   if (status === 404) return "chapter not found (404)";

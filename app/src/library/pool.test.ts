@@ -61,11 +61,14 @@ test("tries again after a growing wait, then gives up", async () => {
   expect(waits).toEqual([2000, 4000, 8000]); // 4 tries, 3 waits between them
 });
 
+// An error like a source throws when the site answers with an error code. The wording doesn't matter.
+const siteError = (status: number) => Object.assign(new Error("any wording at all"), { status });
+
 test("says why a try failed", () => {
-  expect(failReason(new Error("429 Too Many Requests from https://x"))).toBe("too many requests (429)");
-  expect(failReason(new Error("503 Service Unavailable from https://x"))).toBe("the site had a problem (503)");
-  expect(failReason(new Error("403 Forbidden from https://x"))).toBe("the site blocked it (403)");
-  expect(failReason(new Error("418 I'm a teapot from https://x"))).toBe("the site said 418");
+  expect(failReason(siteError(429))).toBe("too many requests (429)");
+  expect(failReason(siteError(503))).toBe("the site had a problem (503)");
+  expect(failReason(siteError(403))).toBe("the site blocked it (403)");
+  expect(failReason(siteError(418))).toBe("the site said 418");
   expect(failReason(new DOMException("signal timed out", "TimeoutError"))).toBe("the site is too slow to answer");
   expect(failReason("error sending request for url (https://x)")).toBe("couldn't reach the site");
   expect(failReason(new Error("no chapter text on the page"))).toBe("no chapter text on the page");
@@ -76,5 +79,8 @@ test("clear() hands back the waiting jobs, and the running ones still finish", a
   const pool = makePool<number>(1, async (job) => {
     await sleep(10);
     done.push(job);
-  
+  });
+  pool.add([1, 2, 3]);
+  expect(pool.clear()).toEqual([2, 3]);
+  await vi.waitFor(() => expect(done).toEqual([1]));
 });

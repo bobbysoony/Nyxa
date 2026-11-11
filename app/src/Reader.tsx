@@ -282,7 +282,7 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
         <button onClick={pickBook}>📖 Open book</button>
         <button onClick={() => reopenLastBook(true)}>📚 Last EPUB</button>
         <button onClick={() => setShowContents(true)}>☰ Contents</button>
-        {downloaded !== null && (
+        {novelRef.current && (
           <button onClick={() => novelRef.current && onShowNovel(novelRef.current.novelId)}>ℹ Novel page</button>
         )}
         <span>{title}</span>

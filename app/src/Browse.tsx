@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { sources } from "./sources";
 import type { NovelItem, SourceNovel } from "./sources/types";
 import { queueChapters } from "./library/download";
-import { listNovels, saveNovel, setAllRead, type LibraryRow } from "./library/db";
+import { getChapters, listNovels, saveNovel, setAllRead, type LibraryRow } from "./library/db";
 import { downloadCover } from "./library/covers";
 
 const source = sources[0];
@@ -64,7 +64,17 @@ function Browse({ onRead, novelId }: BrowseProps) {
       setNovel(details);
       setStatus("");
     } catch (err) {
-      setStatus(`Couldn't open it: ${err}`);
+      if (!saved) return setStatus(`Couldn't open it: ${err}`);
+      // Offline, but it's in your library: show what Nyxa saved instead.
+      const chapters = await getChapters(saved.id);
+      setNovel({
+        name: saved.name,
+        path: saved.path,
+        author: saved.author ?? undefined,
+        summary: saved.summary ?? undefined,
+        chapters: chapters.map((chapter) => ({ name: chapter.name, path: chapter.path })),
+      });
+      setStatus("Couldn't reach the site, so this is what Nyxa has saved.");
     }
   }
 

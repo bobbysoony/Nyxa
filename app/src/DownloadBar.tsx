@@ -19,7 +19,7 @@ function DownloadBar() {
         <>
           <span>
             Downloading: {downloads.done} done, {left} to go{failed}
-            {downloads.step && ` · ${downloads.step}`}
+            {downloads.steps.map((step) => ` · ${step}`)}
           </span>
           <button onClick={stopDownloads}>Stop</button>
         </>

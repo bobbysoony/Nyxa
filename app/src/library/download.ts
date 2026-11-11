@@ -16,23 +16,27 @@ export type Downloads = {
   downloading: number;
   done: number;
   failed: number;
-  step: string; // what's happening right now, like "Saving Chapter 12"
+  steps: string[]; // what each chapter downloading right now is doing, like "Saving Chapter 12"
 };
 
 type Job = { source: Source; chapter: ChapterRow };
 
 // The download queue lives here, outside every screen, so it keeps going when you leave Browse.
-const downloads: Downloads = { waiting: 0, downloading: 0, done: 0, failed: 0, step: "" };
+const downloads: Downloads = { waiting: 0, downloading: 0, done: 0, failed: 0, steps: [] };
 const pools = new Map<string, Pool<Job>>(); // one pool per site, so each site has its own limit
 const queued = new Set<number>(); // chapter ids waiting or downloading, so none is added twice
 const watchers = new Set<(downloads: Downloads) => void>();
+const steps = new Map<number, string>(); // chapter id → its step, so workers don't talk over each other
 
 function tell() {
   watchers.forEach((watcher) => watcher({ ...downloads }));
 }
 
-function setStep(step: string) {
-  downloads.step = step;
+// `null` means the chapter is finished, so its line goes away.
+function setStep(chapterId: number, step: string | null) {
+  if (step === null) steps.delete(chapterId);
+  else steps.set(chapterId, step);
+  downloads.steps = [...steps.values()];
   tell();
 }
 
@@ -48,13 +52,13 @@ export function watchDownloads(watcher: (downloads: Downloads) => void) {
 async function downloadOne({ source, chapter }: Job) {
   downloads.waiting--;
   downloads.downloading++;
-  setStep(`Fetching ${chapter.name}`);
+  setStep(chapter.id, `Fetching ${chapter.name}`);
   try {
     const html = await withRetry(() => source.parseChapter(chapter.path), 4, (ms, err) => {
-      setStep(`${chapter.name} didn't load: ${failReason(err)}. Trying again in ${ms / 1000} s`);
+      setStep(chapter.id, `${chapter.name} didn't load: ${failReason(err)}. Trying again in ${ms / 1000} s`);
       return sleep(ms);
     });
-    setStep(`Saving ${chapter.name}`);
+    setStep(chapter.id, `Saving ${chapter.name}`);
     await invoke("save_chapter_text", { chapterId: chapter.id, html });
     const db = await getDb();
     await db.execute("UPDATE chapters SET downloaded = 1 WHERE id = $1", [chapter.id]);
@@ -65,7 +69,7 @@ async function downloadOne({ source, chapter }: Job) {
   }
   downloads.downloading--;
   queued.delete(chapter.id);
-  tell();
+  setStep(chapter.id, null);
   await sleep(1000 + Math.random() * 1000); // a short rest before this worker asks the site again
 }
 
