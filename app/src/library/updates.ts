@@ -41,6 +41,7 @@ export async function checkForUpdates(onProgress: (check: Check) => void) {
       onProgress({ ...check });
       await sleep(500);
     }
+    return check;
   } finally {
     running = false;
   }

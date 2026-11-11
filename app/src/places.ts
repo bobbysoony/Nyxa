@@ -1,3 +1,4 @@
+// Where you are in Nyxa, and the places you came through to get here.
 export type Place = {
   screen: "library" | "reader" | "browse" | "updates";
   novelId: number | null;

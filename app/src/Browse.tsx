@@ -1,13 +1,18 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { sources } from "./sources";
 import type { NovelItem, SourceNovel } from "./sources/types";
-import { downloadChapters, type Progress } from "./library/download";
+import { queueChapters } from "./library/download";
 import { listNovels, saveNovel, setAllRead, type LibraryRow } from "./library/db";
 import { downloadCover } from "./library/covers";
 
 const source = sources[0];
 
-function Browse({ onRead }: { onRead: (novelId: number) => void }) {
+type BrowseProps = {
+  onRead: (novelId: number) => void;
+  novelId: number | null; // a library novel to open its page for, like from the Reader's button
+};
+
+function Browse({ onRead, novelId }: BrowseProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<NovelItem[]>([]);
   const [novel, setNovel] = useState<SourceNovel | null>(null);
@@ -15,12 +20,13 @@ function Browse({ onRead }: { onRead: (novelId: number) => void }) {
   const [status, setStatus] = useState(source ? "" : "No sources on this computer");
   const [library, setLibrary] = useState<LibraryRow[]>([]);
   const [libraryId, setLibraryId] = useState<number | null>(null);
-  const [progress, setProgress] = useState<Progress | null>(null);
-  const [downloading, setDownloading] = useState(false);
-  const stopRef = useRef(false);
 
   useEffect(() => {
-    listNovels().then(setLibrary);
+    listNovels().then((rows) => {
+      setLibrary(rows);
+      const row = rows.find((r) => r.id === novelId);
+      if (row) openNovel(row, rows);
+    });
   }, []);
 
   async function search() {
@@ -47,12 +53,12 @@ function Browse({ onRead }: { onRead: (novelId: number) => void }) {
     }
   }
 
-  async function openNovel(item: NovelItem) {
+  // `rows` is for the first load, before the `library` state has caught up.
+  async function openNovel(item: NovelItem, rows = library) {
     setStatus(`Opening ${item.name}…`);
     setChapterHtml("");
-    const saved = library.find((row) => row.source === source.id && row.path === item.path);
+    const saved = rows.find((row) => row.source === source.id && row.path === item.path);
     setLibraryId(saved?.id ?? null);
-    setProgress(null);
     try {
       const details = await source.parseNovel(item.path);
       setNovel(details);
@@ -97,11 +103,7 @@ function Browse({ onRead }: { onRead: (novelId: number) => void }) {
 
   async function download(count: number) {
     if (!libraryId) return;
-    stopRef.current = false;
-    setDownloading(true);
-    const result = await downloadChapters(source, libraryId, count, setProgress, () => stopRef.current);
-    setDownloading(false);
-    setStatus(`Downloaded ${result.done} chapters${result.failed ? `, ${result.failed} failed` : ""}`);
+    await queueChapters(source, libraryId, count);
   }
 
   return (
@@ -165,16 +167,7 @@ function Browse({ onRead }: { onRead: (novelId: number) => void }) {
                   )}
                 </span>
               </button>
-              <button onClick={() => download(50)} disabled={downloading}>Download 50 chapters</button>
-              {downloading && <button onClick={() => (stopRef.current = true)}>Stop</button>}
-              {progress && (
-                <p>
-                  <progress value={progress.done + progress.failed} max={progress.total} />{" "}
-                  {progress.done} of {progress.total}
-                  {progress.done === progress.total && " (All done!)"}
-                  {progress.failed > 0 && `, ${progress.failed} failed`}
-                </p>
-              )}
+              <button onClick={() => download(50)}>Download 50 chapters</button>
             </div>
           )}
 

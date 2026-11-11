@@ -493,3 +493,16 @@ body {
   justify-content: flex-end;
   gap: 8px;
 }
+
+.download-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 16px;
+  font-size: 0.85em;
+}
+
+.download-bar button {
+  padding: 2px 10px;
+}

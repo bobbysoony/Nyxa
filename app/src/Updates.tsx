@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getNovel, listUpdates, saveNovelPosition, type UpdateRow } from "./library/db";
 import type { Check } from "./library/updates";
+import Confirm from "./Confirm";
 
 type UpdatesProps = {
   check: Check | null;
@@ -75,17 +76,13 @@ function Updates({ check, onCheck, onRead }: UpdatesProps) {
         </button>
       ))}
       {asking && (
-        <>
-          <div className="backdrop" onClick={() => answer(false)}></div>
-          <div className="confirm">
-            <strong>{asking.row.novel_name}</strong>
-            <p>Your current place is chapter {asking.current}. Move it to "{asking.row.name}"?</p>
-            <div className="confirm-buttons">
-              <button onClick={() => answer(false)}>No, keep my place</button>
-              <button onClick={() => answer(true)}>Yes, move it</button>
-            </div>
-          </div>
-        </>
+        <Confirm
+          title={asking.row.novel_name}
+          message={`Your current place is chapter ${asking.current}. Move it to "${asking.row.name}"?`}
+          no="No, keep my place"
+          yes="Yes, move it"
+          onAnswer={answer}
+        />
       )}
     </div>
   );

@@ -8,6 +8,8 @@ import { defaultSettings, Settings, getTheme } from "./settings";
 import { Place, browse, goBack, goTo, library, reader, updates } from "./places";
 import Updates from "./Updates";
 import { checkForUpdates, type Check } from "./library/updates";
+import { listNovels } from "./library/db";
+import DownloadBar from "./DownloadBar";
 import "./App.css";
 
 function App() {
@@ -15,6 +17,7 @@ function App() {
   const [places, setPlaces] = useState<Place[]>([library]);
   const place = places[places.length - 1];
   const [check, setCheck] = useState<Check | null>(null);
+  const [fresh, setFresh] = useState(0);
   const latestPlaces = useRef(places); // lets the once-only Back listeners see the current pile
 
   useEffect(() => {
@@ -25,6 +28,11 @@ function App() {
   useEffect(() => {
     latestPlaces.current = places;
   }, [places]);
+
+  // Counted from the database like the covers, so it survives a restart and drops as you read.
+  useEffect(() => {
+    listNovels().then((novels) => setFresh(novels.reduce((sum, novel) => sum + novel.fresh, 0)));
+  }, [place, check?.found]);
 
   useEffect(() => {
     if (!navigator.userAgent.includes("Android")) return; // only phones have a Back button
@@ -58,8 +66,9 @@ function App() {
     const store = await load("nyxa.json");
     const last = (await store.get<number>("lastCheck")) ?? 0;
     if (Date.now() - last < 60 * 60 * 1000) return;
-    await store.set("lastCheck", Date.now());
-    checkForUpdates(setCheck);
+    const result = await checkForUpdates(setCheck);
+    // Only once a novel really got checked, so opening Nyxa offline doesn't wait an hour to try again.
+    if (result && result.failed < result.total) await store.set("lastCheck", Date.now());
   }
 
   async function loadSettings() {
@@ -102,15 +111,22 @@ function App() {
         <button className={place.screen === "reader" ? "active" : ""} onClick={() => go(reader)}>Reader</button>
         <button className={place.screen === "browse" ? "active" : ""} onClick={() => go(browse)}>Browse</button>
         <button className={place.screen === "updates" ? "active" : ""} onClick={() => go(updates)}>
-          Updates{check?.found ? ` (${check.found})` : ""}
+          Updates{fresh ? ` (${fresh})` : ""}
         </button>
-
       </nav>
+      <DownloadBar />
       {place.screen === "library" && <Library onReadNovel={readNovel} onReadBook={readBook} found={check?.found ?? 0} />}
       {place.screen === "reader" && (
-        <Reader settings={settings} onSettingsChange={changeSettings} novelId={place.novelId} bookId={place.bookId} />
+        <Reader
+          settings={settings}
+          onSettingsChange={changeSettings}
+          novelId={place.novelId}
+          bookId={place.bookId}
+          onShowNovel={(id) => go({ ...browse, novelId: id })}
+        />
       )}
-      {place.screen === "browse" && <Browse onRead={readNovel} />}
+      {/* The key starts Browse fresh when the novel changes, e.g. Back from a novel page to plain Browse. */}
+      {place.screen === "browse" && <Browse key={place.novelId ?? "all"} onRead={readNovel} novelId={place.novelId} />}
       {place.screen === "updates" && (
         <Updates check={check} onCheck={() => checkForUpdates(setCheck)} onRead={readNovel} />
       )}

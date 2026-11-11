@@ -29,9 +29,10 @@ type ReaderProps = {
   onSettingsChange: (settings: Settings) => void;
   novelId: number | null;
   bookId: number | null;
+  onShowNovel: (novelId: number) => void;
 };
 
-function Reader({ settings, onSettingsChange, novelId, bookId }: ReaderProps) {
+function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: ReaderProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<FoliateView | null>(null);
   const bookIdRef = useRef<number | null>(null);
@@ -281,6 +282,9 @@ function Reader({ settings, onSettingsChange, novelId, bookId }: ReaderProps) {
         <button onClick={pickBook}>📖 Open book</button>
         <button onClick={() => reopenLastBook(true)}>📚 Last EPUB</button>
         <button onClick={() => setShowContents(true)}>☰ Contents</button>
+        {downloaded !== null && (
+          <button onClick={() => novelRef.current && onShowNovel(novelRef.current.novelId)}>ℹ Novel page</button>
+        )}
         <span>{title}</span>
         {error && <span>{error}</span>}
         <span>{welcome}</span>
