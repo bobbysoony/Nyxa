@@ -113,7 +113,7 @@ function Browse({ onRead, novelId }: BrowseProps) {
 
   async function download(count: number) {
     if (!libraryId) return;
-    await queueChapters(source, libraryId, count);
+    await queueChapters(libraryId, count);
   }
 
   return (

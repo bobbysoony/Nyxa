@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { getDb, type ChapterRow } from "./db";
 import { failReason, makePool, withRetry, type Pool } from "./pool";
+import { sources } from "../sources";
 import type { Source } from "../sources/types";
 
 // Wait for `ms` milliseconds. `await sleep(1000)` pauses for one second.
@@ -21,10 +22,11 @@ export type Downloads = {
 
 type Job = { source: Source; chapter: ChapterRow };
 
-// The download queue lives here, outside every screen, so it keeps going when you leave Browse.
+// The queue itself is in the database: chapters.download_state says 'waiting' or 'failed'.
+// What's here is only this run of Nyxa: the workers, and the numbers the bar shows.
 const downloads: Downloads = { waiting: 0, downloading: 0, done: 0, failed: 0, steps: [] };
 const pools = new Map<string, Pool<Job>>(); // one pool per site, so each site has its own limit
-const queued = new Set<number>(); // chapter ids waiting or downloading, so none is added twice
+const queued = new Set<number>(); // chapter ids a worker has or will get, so none is handed out twice
 const watchers = new Set<(downloads: Downloads) => void>();
 const steps = new Map<number, string>(); // chapter id → its step, so workers don't talk over each other
 
@@ -53,6 +55,7 @@ async function downloadOne({ source, chapter }: Job) {
   downloads.waiting--;
   downloads.downloading++;
   setStep(chapter.id, `Fetching ${chapter.name}`);
+  const db = await getDb();
   try {
     const html = await withRetry(() => source.parseChapter(chapter.path), 4, (ms, err) => {
       setStep(chapter.id, `${chapter.name} didn't load: ${failReason(err)}. Trying again in ${ms / 1000} s`);
@@ -60,11 +63,12 @@ async function downloadOne({ source, chapter }: Job) {
     });
     setStep(chapter.id, `Saving ${chapter.name}`);
     await invoke("save_chapter_text", { chapterId: chapter.id, html });
-    const db = await getDb();
-    await db.execute("UPDATE chapters SET downloaded = 1 WHERE id = $1", [chapter.id]);
+    // waiting → done: one UPDATE, so a chapter is never "downloaded but still waiting".
+    await db.execute("UPDATE chapters SET downloaded = 1, download_state = NULL WHERE id = $1", [chapter.id]);
     downloads.done++;
   } catch (err) {
     console.error(`Chapter ${chapter.number} failed after 4 tries`, err);
+    await db.execute("UPDATE chapters SET download_state = 'failed' WHERE id = $1", [chapter.id]);
     downloads.failed++;
   }
   downloads.downloading--;
@@ -73,50 +77,79 @@ async function downloadOne({ source, chapter }: Job) {
   await sleep(1000 + Math.random() * 1000); // a short rest before this worker asks the site again
 }
 
-// Puts the next `count` chapters of a novel that aren't downloaded yet into the queue.
-export async function queueChapters(source: Source, novelId: number, count: number) {
+// Hands every chapter marked 'waiting' in the database to its site's pool, unless a worker has it already.
+// Every way into the queue ends here: Download, Try again, and Nyxa opening.
+export async function startWaiting() {
   const db = await getDb();
-  const chapters = await db.select<ChapterRow[]>(
-    `SELECT * FROM chapters
-     WHERE novel_id = $1 AND downloaded = 0
-     ORDER BY number`,
-    [novelId],
+  const rows = await db.select<(ChapterRow & { source: string })[]>(
+    `SELECT chapters.*, novels.source
+     FROM chapters JOIN novels ON novels.id = chapters.novel_id
+     WHERE chapters.download_state = 'waiting'
+     ORDER BY chapters.novel_id, chapters.number`,
   );
-  // Skip the ones already in the queue, so pressing Download again queues the next lot.
-  const jobs = chapters
-    .filter((chapter) => !queued.has(chapter.id))
-    .slice(0, count)
-    .map((chapter) => ({ source, chapter }));
-  if (jobs.length === 0) return;
+  const failed = await db.select<{ n: number }[]>(
+    "SELECT COUNT(*) AS n FROM chapters WHERE download_state = 'failed'",
+  );
+  downloads.failed = failed[0].n;
+  // Starting again after everything finished: forget the old count.
+  if (downloads.waiting === 0 && downloads.downloading === 0) downloads.done = 0;
 
-  // Starting again after everything finished: forget the old counts.
-  if (downloads.waiting === 0 && downloads.downloading === 0) {
-    downloads.done = 0;
-    downloads.failed = 0;
+  for (const chapter of rows) {
+    if (queued.has(chapter.id)) continue;
+    const source = sources.find((s) => s.id === chapter.source);
+    if (!source) continue; // that site isn't on this device, so the chapter keeps waiting
+    let pool = pools.get(source.id);
+    if (!pool) {
+      pool = makePool(PER_SITE, downloadOne);
+      pools.set(source.id, pool);
+    }
+    queued.add(chapter.id);
+    downloads.waiting++;
+    pool.add([{ source, chapter }]);
   }
-  jobs.forEach((job) => queued.add(job.chapter.id));
-  downloads.waiting += jobs.length;
   tell();
-
-  let pool = pools.get(source.id);
-  if (!pool) {
-    pool = makePool(PER_SITE, downloadOne);
-    pools.set(source.id, pool);
-  }
-  pool.add(jobs);
 }
 
-// Stop button: empties every waiting line. Chapters already downloading finish.
-export function stopDownloads() {
+// Marks the next `count` chapters of a novel that aren't downloaded as 'waiting'.
+// Ones already waiting are skipped, so pressing Download again queues the next lot. Failed ones get another go.
+export async function queueChapters(novelId: number, count: number) {
+  const db = await getDb();
+  await db.execute(
+    `UPDATE chapters SET download_state = 'waiting'
+     WHERE id IN (
+       SELECT id FROM chapters
+       WHERE novel_id = $1 AND downloaded = 0
+         AND (download_state IS NULL OR download_state = 'failed')
+       ORDER BY number
+       LIMIT $2
+     )`,
+    [novelId, count],
+  );
+  await startWaiting();
+}
+
+// Stop button: nothing is waiting any more. Chapters already downloading finish.
+export async function stopDownloads() {
   for (const pool of pools.values()) {
     pool.clear().forEach((job) => queued.delete(job.chapter.id));
   }
   downloads.waiting = 0;
   tell();
+  const db = await getDb();
+  await db.execute("UPDATE chapters SET download_state = NULL WHERE download_state = 'waiting'");
 }
 
-// The ✕ on "Downloads finished": forget the counts, which hides the bar.
-export function clearFinished() {
+// Try again button: every failed chapter goes back to waiting.
+export async function retryFailed() {
+  const db = await getDb();
+  await db.execute("UPDATE chapters SET download_state = 'waiting' WHERE download_state = 'failed'");
+  await startWaiting();
+}
+
+// The ✕ on "Downloads finished": forget the failed ones too, which hides the bar.
+export async function clearFinished() {
+  const db = await getDb();
+  await db.execute("UPDATE chapters SET download_state = NULL WHERE download_state = 'failed'");
   downloads.done = 0;
   downloads.failed = 0;
   tell();

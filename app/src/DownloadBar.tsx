@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { clearFinished, stopDownloads, watchDownloads, type Downloads } from "./library/download";
+import { clearFinished, retryFailed, stopDownloads, watchDownloads, type Downloads } from "./library/download";
 
 // A thin bar under the tabs, on every screen, while chapters download.
 function DownloadBar() {
@@ -28,6 +28,7 @@ function DownloadBar() {
           <span>
             Downloads finished: {downloads.done} done{failed}
           </span>
+          {downloads.failed > 0 && <button onClick={retryFailed}>Try again</button>}
           <button onClick={clearFinished}>✕</button>
         </>
       )}

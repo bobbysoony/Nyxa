@@ -10,6 +10,7 @@ import Updates from "./Updates";
 import { checkForUpdates, type Check } from "./library/updates";
 import { listNovels } from "./library/db";
 import DownloadBar from "./DownloadBar";
+import { startWaiting, retryFailed } from "./library/download";
 import "./App.css";
 
 function App() {
@@ -23,6 +24,12 @@ function App() {
   useEffect(() => {
     loadSettings();
     checkOnOpen();
+    startWaiting();
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("online", retryFailed);
+    return () => window.removeEventListener("online", retryFailed);
   }, []);
 
   useEffect(() => {
