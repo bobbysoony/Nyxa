@@ -10,7 +10,7 @@ import Updates from "./Updates";
 import { checkForUpdates, type Check } from "./library/updates";
 import { listNovels } from "./library/db";
 import DownloadBar from "./DownloadBar";
-import { startWaiting, retryFailed } from "./library/download";
+import { retryFailed, startWaiting } from "./library/download";
 import "./App.css";
 
 function App() {
@@ -24,7 +24,7 @@ function App() {
   useEffect(() => {
     loadSettings();
     checkOnOpen();
-    startWaiting();
+    startWaiting(); // finish downloads that were still queued when Nyxa last closed
   }, []);
 
   useEffect(() => {
@@ -135,7 +135,7 @@ function App() {
       {/* The key starts Browse fresh when the novel changes, e.g. Back from a novel page to plain Browse. */}
       {place.screen === "browse" && <Browse key={place.novelId ?? "all"} onRead={readNovel} novelId={place.novelId} />}
       {place.screen === "updates" && (
-        <Updates check={check} onCheck={() => checkForUpdates(setCheck)} onRead={readNovel} />
+        <Updates check={check} onCheck={() => checkForUpdates(setCheck)} onRead={readNovel} onClear={() => setFresh(0)} />
       )}
     </div>
   );

@@ -10,6 +10,8 @@ export type NovelRow = {
   summary: string | null;
   last_chapter: number | null;
   last_paragraph: number;
+  auto_download: number;
+  auto_limit: number;
 };
 
 export type ChapterRow = {
@@ -104,18 +106,25 @@ export type UpdateRow = {
   number: number;
   name: string;
   read: number;
+  downloaded: number;
 };
 
 export async function listUpdates() {
   const db = await getDb();
   return db.select<UpdateRow[]>(
     `SELECT chapters.novel_id, novels.name AS novel_name,
-       chapters.number, chapters.name, chapters.read
+       chapters.number, chapters.name, chapters.read, chapters.downloaded
      FROM chapters JOIN novels ON novels.id = chapters.novel_id
      WHERE chapters.found_at IS NOT NULL
      ORDER BY chapters.found_at DESC, chapters.number DESC
      LIMIT 200`,
   );
+}
+
+// Clear button on Updates: the chapters stay, they just stop counting as "found by a check".
+export async function clearUpdates() {
+  const db = await getDb();
+  await db.execute("UPDATE chapters SET found_at = NULL WHERE found_at IS NOT NULL");
 }
 
 export async function getChapters(novelId: number) {
@@ -130,6 +139,15 @@ export async function getNovel(novelId: number) {
   const db = await getDb();
   const rows = await db.select<NovelRow[]>("SELECT * FROM novels WHERE id = $1", [novelId]);
   return rows[0] ?? null;
+}
+
+export async function saveAutoDownload(novelId: number, on: boolean, limit: number) {
+  const db = await getDb();
+  await db.execute("UPDATE novels SET auto_download = $1, auto_limit = $2 WHERE id = $3", [
+    on ? 1 : 0,
+    limit,
+    novelId,
+  ]);
 }
 
 export async function saveNovelPosition(novelId: number, chapter: number, paragraph: number) {

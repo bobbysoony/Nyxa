@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getNovel, listUpdates, saveNovelPosition, type UpdateRow } from "./library/db";
+import { clearUpdates, getNovel, listUpdates, saveNovelPosition, type UpdateRow } from "./library/db";
 import type { Check } from "./library/updates";
 import Confirm from "./Confirm";
 
@@ -7,6 +7,7 @@ type UpdatesProps = {
   check: Check | null;
   onCheck: () => void;
   onRead: (novelId: number) => void;
+  onClear: () => void;
 };
 
 function checkText(check: Check | null) {
@@ -18,7 +19,7 @@ function checkText(check: Check | null) {
   return `Checked ${novels}: ${found}${failed}`;
 }
 
-function Updates({ check, onCheck, onRead }: UpdatesProps) {
+function Updates({ check, onCheck, onRead, onClear }: UpdatesProps) {
   const [rows, setRows] = useState<UpdateRow[]>([]);
   const [asking, setAsking] = useState<{ row: UpdateRow; current: number } | null>(null);
   const checking = check !== null && check.done < check.total;
@@ -50,6 +51,12 @@ function Updates({ check, onCheck, onRead }: UpdatesProps) {
     setAsking({ row, current });
   }
 
+  async function clear() {
+    await clearUpdates();
+    setRows([]);
+    onClear();
+  }
+
   // "No" (or tapping outside the box) leaves the saved place alone and opens the novel where you were.
   async function answer(override: boolean) {
     if (!asking) return;
@@ -63,6 +70,7 @@ function Updates({ check, onCheck, onRead }: UpdatesProps) {
       <div className="updates-bar">
         <span>{checkText(check)}</span>
         <button onClick={onCheck} disabled={checking}>Check again</button>
+        <button onClick={clear} disabled={checking || rows.length === 0}>Clear</button>
       </div>
       {rows.length === 0 && <p className="updates-empty">No new chapters yet.</p>}
       {rows.map((row) => (
@@ -73,6 +81,7 @@ function Updates({ check, onCheck, onRead }: UpdatesProps) {
         >
           <span className="updates-novel">{row.novel_name}</span>
           <span>{row.name}</span>
+          {row.downloaded === 1 && <span className="updates-saved">↓ saved</span>}
         </button>
       ))}
       {asking && (

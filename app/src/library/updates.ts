@@ -1,7 +1,7 @@
 import { sources } from "../sources";
 import type { ChapterItem } from "../sources/types";
 import { getChapters, listNovels, saveChapterList } from "./db";
-import { sleep } from "./download";
+import { queueChapters, sleep } from "./download";
 
 // The chapters on the site that Nyxa doesn't have yet, in the site's order.
 // A chapter is known by its path, because names can change ("Chapter 12" → "Chapter 12: The Spire").
@@ -33,6 +33,8 @@ export async function checkForUpdates(onProgress: (check: Check) => void) {
         // New chapters go after the last one Nyxa has.
         await saveChapterList(novel.id, found, chapters.length + 1, Date.now());
         check.found += found.length;
+        // auto_limit is the cap: a novel you haven't opened for months could have hundreds waiting.
+        if (novel.auto_download && found.length > 0) await queueChapters(novel.id, novel.auto_limit, true);
       } catch (err) {
         console.error(`Couldn't check ${novel.name}:`, err);
         check.failed++;

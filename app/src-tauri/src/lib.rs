@@ -61,6 +61,12 @@ fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/007_download_state.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 8,
+            description: "auto download",
+            sql: include_str!("../migrations/008_auto_download.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 

@@ -452,6 +452,11 @@ body {
   padding-bottom: 8px;
 }
 
+/* The text takes the spare room, so both buttons sit together on the right. */
+.updates-bar span {
+  flex: 1;
+}
+
 .updates-row {
   display: flex;
   flex-direction: column;
@@ -469,6 +474,10 @@ body {
 .updates-novel {
   font-size: 0.8em;
   font-weight: bold;
+}
+
+.updates-saved {
+  font-size: 0.8em;
 }
 
 .confirm {
@@ -505,4 +514,22 @@ body {
 
 .download-bar button {
   padding: 2px 10px;
+}
+
+.auto-download {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auto-download label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auto-download input {
+  padding: 0;
+  background: none;
+  box-shadow: none;
 }

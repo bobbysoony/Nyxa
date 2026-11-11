@@ -112,7 +112,8 @@ export async function startWaiting() {
 
 // Marks the next `count` chapters of a novel that aren't downloaded as 'waiting'.
 // Ones already waiting are skipped, so pressing Download again queues the next lot. Failed ones get another go.
-export async function queueChapters(novelId: number, count: number) {
+// With `onlyNew`, only chapters an update check found that you haven't read (lesson 23b).
+export async function queueChapters(novelId: number, count: number, onlyNew = false) {
   const db = await getDb();
   await db.execute(
     `UPDATE chapters SET download_state = 'waiting'
@@ -120,10 +121,11 @@ export async function queueChapters(novelId: number, count: number) {
        SELECT id FROM chapters
        WHERE novel_id = $1 AND downloaded = 0
          AND (download_state IS NULL OR download_state = 'failed')
+         AND ($3 = 0 OR (found_at IS NOT NULL AND read = 0))
        ORDER BY number
        LIMIT $2
      )`,
-    [novelId, count],
+    [novelId, count, onlyNew ? 1 : 0],
   );
   await startWaiting();
 }

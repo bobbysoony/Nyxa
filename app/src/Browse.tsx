@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { sources } from "./sources";
 import type { NovelItem, SourceNovel } from "./sources/types";
 import { queueChapters } from "./library/download";
-import { getChapters, listNovels, saveNovel, setAllRead, type LibraryRow } from "./library/db";
+import { getChapters, listNovels, saveAutoDownload, saveNovel, setAllRead, type LibraryRow } from "./library/db";
 import { downloadCover } from "./library/covers";
+import AutoDownload from "./AutoDownload";
 
 const source = sources[0];
 
@@ -20,6 +21,8 @@ function Browse({ onRead, novelId }: BrowseProps) {
   const [status, setStatus] = useState(source ? "" : "No sources on this computer");
   const [library, setLibrary] = useState<LibraryRow[]>([]);
   const [libraryId, setLibraryId] = useState<number | null>(null);
+  const [showAuto, setShowAuto] = useState(false);
+
 
   useEffect(() => {
     listNovels().then((rows) => {
@@ -94,6 +97,13 @@ function Browse({ onRead, novelId }: BrowseProps) {
   async function readItAll() {
     if (!libraryId) return;
     await setAllRead(libraryId, !allRead);
+    setLibrary(await listNovels());
+  }
+
+  async function saveAuto(on: boolean, limit: number) {
+    setShowAuto(false);
+    if (!libraryId) return;
+    await saveAutoDownload(libraryId, on, limit);
     setLibrary(await listNovels());
   }
 
@@ -177,6 +187,14 @@ function Browse({ onRead, novelId }: BrowseProps) {
                   )}
                 </span>
               </button>
+              {libraryRow && (
+                <button onClick={() => setShowAuto(true)}>
+                  ⚙ Auto-download: {libraryRow.auto_download ? `up to ${libraryRow.auto_limit}` : "off"}
+                </button>
+              )}
+              {showAuto && libraryRow && (
+                <AutoDownload on={libraryRow.auto_download === 1} limit={libraryRow.auto_limit} onDone={saveAuto} />
+              )}
               <button onClick={() => download(50)}>Download 50 chapters</button>
             </div>
           )}
