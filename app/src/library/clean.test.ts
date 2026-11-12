@@ -24,12 +24,18 @@ test("'visit … for the latest chapters' is junk", () => {
   expect(isJunk("Please visit some-site.example for the latest chapters!")).toBe(true);
 });
 
+test("'join our discord/telegram' is junk", () => {
+  expect(isJunk("Join our Discord for early chapters!")).toBe(true);
+  expect(isJunk("Join the Telegram channel for updates")).toBe(true);
+});
+
 // Just as important: what must stay.
 
 test("story lines that only look like junk stay", () => {
   expect(isJunk("The advertisement on the wall was old and torn.")).toBe(false);
   expect(isJunk("\"We should visit the capital for the festival,\" she said.")).toBe(false);
   expect(isJunk("He would read the latest chapters of the old scroll at dawn.")).toBe(false);
+  expect(isJunk("He wanted to join the others.")).toBe(false);
 });
 
 test("credits and official notices are not junk", () => {

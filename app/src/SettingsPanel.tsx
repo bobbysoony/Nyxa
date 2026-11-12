@@ -147,7 +147,7 @@ function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
       </label>
 
       <label>
-        Hide lines containing (one phrase per line):
+        Hide paragraphs containing (one phrase per line):
         <textarea
           rows={3}
           value={settings.filters.join("\n")}

@@ -7,8 +7,8 @@ export const junkRules: RegExp[] = [
   /\bthis chapter (is|was) (updated|uploaded) by\b/i,
   /^read (the )?(latest|newest) chapters? (at|on)\b/i,
   /\bvisit\b.{0,40}\bfor (the )?(latest|newest|fastest|more) (chapters|updates|releases)\b/i,
-  /\bjoin\b.{0,40}\b(book club|discord|telegram|telegram channel|telegram group)\b/i,
-  /^(https?:\/\/|www\.)\S+$/i
+  /\bjoin\b.{0,40}\b(book club|discord|telegram)\b/i,
+  /^(https?:\/\/|www\.)\S+$/i,
 ];
 
 // A short line that only credits the people who made the chapter, like "Translator: Moonlight".
