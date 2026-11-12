@@ -8,6 +8,7 @@ export type Settings = {
   readingMode: string;
   wordsPerMinute: number;
   showTimeLeft: boolean;
+  filters: string[];
 };
 
 // What Nyxa uses until you change something.
@@ -19,7 +20,8 @@ export const defaultSettings: Settings = {
   theme: "night",
   readingMode: "paginated",
   wordsPerMinute: 250,
-  showTimeLeft: true
+  showTimeLeft: true,
+  filters: []
 };
 
 type Theme = {
@@ -34,7 +36,7 @@ export const themes: Record<string, Theme> = {
   contrast: { background: "#000000", text: "#ffffff" }
 };
 
-export function getTheme(name: string){
+export function getTheme(name: string) {
   return themes[name] || themes.night;
 }
 
@@ -58,6 +60,9 @@ export function makeBookCSS(settings: Settings) {
     }
     body *:not(h1, h2, h3, h4, h5, h6) {
       font-size: inherit !important;
+    }
+    .credits {
+      opacity: 0.6;
     }
   `;
 }

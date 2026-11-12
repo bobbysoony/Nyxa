@@ -7,6 +7,7 @@ import Library from "./Library";
 import { defaultSettings, Settings, getTheme } from "./settings";
 import { Place, browse, goBack, goTo, library, reader, updates } from "./places";
 import Updates from "./Updates";
+import Fps from "./Fps";
 import { checkForUpdates, type Check } from "./library/updates";
 import { listNovels } from "./library/db";
 import DownloadBar from "./DownloadBar";
@@ -37,9 +38,11 @@ function App() {
   }, [places]);
 
   // Counted from the database like the covers, so it survives a restart and drops as you read.
-  useEffect(() => {
+  function countFresh() {
     listNovels().then((novels) => setFresh(novels.reduce((sum, novel) => sum + novel.fresh, 0)));
-  }, [place, check?.found]);
+  }
+
+  useEffect(countFresh, [place, check?.found]);
 
   useEffect(() => {
     if (!navigator.userAgent.includes("Android")) return; // only phones have a Back button
@@ -122,6 +125,7 @@ function App() {
         </button>
       </nav>
       <DownloadBar />
+      {import.meta.env.DEV && <Fps />}
       {place.screen === "library" && <Library onReadNovel={readNovel} onReadBook={readBook} found={check?.found ?? 0} />}
       {place.screen === "reader" && (
         <Reader
@@ -135,7 +139,7 @@ function App() {
       {/* The key starts Browse fresh when the novel changes, e.g. Back from a novel page to plain Browse. */}
       {place.screen === "browse" && <Browse key={place.novelId ?? "all"} onRead={readNovel} novelId={place.novelId} />}
       {place.screen === "updates" && (
-        <Updates check={check} onCheck={() => checkForUpdates(setCheck)} onRead={readNovel} onClear={() => setFresh(0)} />
+        <Updates check={check} onCheck={() => checkForUpdates(setCheck)} onRead={readNovel} onClear={countFresh} />
       )}
     </div>
   );

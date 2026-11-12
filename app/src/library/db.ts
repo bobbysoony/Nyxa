@@ -93,7 +93,7 @@ export async function listNovels() {
         WHERE chapters.novel_id = novels.id AND chapters.read = 0) AS unread,
        (SELECT COUNT(*) FROM chapters
         WHERE chapters.novel_id = novels.id AND chapters.read = 0
-          AND chapters.found_at IS NOT NULL) AS fresh
+          AND chapters.found_at IS NOT NULL AND chapters.cleared = 0) AS fresh
      FROM novels
      ORDER BY name`,
   );
@@ -115,16 +115,17 @@ export async function listUpdates() {
     `SELECT chapters.novel_id, novels.name AS novel_name,
        chapters.number, chapters.name, chapters.read, chapters.downloaded
      FROM chapters JOIN novels ON novels.id = chapters.novel_id
-     WHERE chapters.found_at IS NOT NULL
+     WHERE chapters.found_at IS NOT NULL AND chapters.cleared = 0
      ORDER BY chapters.found_at DESC, chapters.number DESC
      LIMIT 200`,
   );
 }
 
-// Clear button on Updates: the chapters stay, they just stop counting as "found by a check".
+// Clear button on Updates: only hides chapters from the list and the counts.
+// found_at stays, so auto-download still treats them as new.
 export async function clearUpdates() {
   const db = await getDb();
-  await db.execute("UPDATE chapters SET found_at = NULL WHERE found_at IS NOT NULL");
+  await db.execute("UPDATE chapters SET cleared = 1 WHERE found_at IS NOT NULL AND cleared = 0");
 }
 
 export async function getChapters(novelId: number) {

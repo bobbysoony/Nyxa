@@ -22,6 +22,7 @@ function checkText(check: Check | null) {
 function Updates({ check, onCheck, onRead, onClear }: UpdatesProps) {
   const [rows, setRows] = useState<UpdateRow[]>([]);
   const [asking, setAsking] = useState<{ row: UpdateRow; current: number } | null>(null);
+  const [clearing, setClearing] = useState(false);
   const checking = check !== null && check.done < check.total;
 
   // Load again whenever a check finds more, so new chapters appear while you watch.
@@ -51,7 +52,9 @@ function Updates({ check, onCheck, onRead, onClear }: UpdatesProps) {
     setAsking({ row, current });
   }
 
-  async function clear() {
+  async function clear(yes: boolean) {
+    setClearing(false);
+    if (!yes) return;
     await clearUpdates();
     setRows([]);
     onClear();
@@ -70,7 +73,7 @@ function Updates({ check, onCheck, onRead, onClear }: UpdatesProps) {
       <div className="updates-bar">
         <span>{checkText(check)}</span>
         <button onClick={onCheck} disabled={checking}>Check again</button>
-        <button onClick={clear} disabled={checking || rows.length === 0}>Clear</button>
+        <button onClick={() => setClearing(true)} disabled={checking || rows.length === 0}>Clear</button>
       </div>
       {rows.length === 0 && <p className="updates-empty">No new chapters yet.</p>}
       {rows.map((row) => (
@@ -91,6 +94,15 @@ function Updates({ check, onCheck, onRead, onClear }: UpdatesProps) {
           no="No, keep my place"
           yes="Yes, move it"
           onAnswer={answer}
+        />
+      )}
+      {clearing && (
+        <Confirm
+          title="Clear updates"
+          message="Remove every chapter from this list? The chapters themselves stay in your library."
+          no="Cancel"
+          yes="Clear"
+          onAnswer={clear}
         />
       )}
     </div>

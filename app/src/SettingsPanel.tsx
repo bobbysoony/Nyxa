@@ -146,6 +146,15 @@ function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
         </select>
       </label>
 
+      <label>
+        Hide lines containing (one phrase per line):
+        <textarea
+          rows={3}
+          value={settings.filters.join("\n")}
+          onChange={(e) => onChange({ ...settings, filters: e.target.value.split("\n") })}
+        />
+      </label>
+
       <button onClick={() => onChange(defaultSettings)}>Reset to default</button>
 
       <div className="about">

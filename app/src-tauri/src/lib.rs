@@ -67,6 +67,12 @@ fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/008_auto_download.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 9,
+            description: "cleared updates",
+            sql: include_str!("../migrations/009_cleared.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 

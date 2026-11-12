@@ -23,7 +23,6 @@ function Browse({ onRead, novelId }: BrowseProps) {
   const [libraryId, setLibraryId] = useState<number | null>(null);
   const [showAuto, setShowAuto] = useState(false);
 
-
   useEffect(() => {
     listNovels().then((rows) => {
       setLibrary(rows);

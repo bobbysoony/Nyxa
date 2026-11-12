@@ -161,7 +161,7 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
 
   async function openNovel(id: number) {
     bookIdRef.current = null;
-    const book = await makeNovelBook(id);
+    const book = await makeNovelBook(id, settings.filters);
     if (!book) {
       setError("This novel has no chapters yet");
       return;

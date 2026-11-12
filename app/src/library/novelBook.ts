@@ -5,6 +5,7 @@ import { sources } from "../sources";
 import type { Source } from "../sources/types";
 import type { FoliateBook, FoliateSection } from "../foliate";
 import { findParagraph } from "./position";
+import { cleanChapter } from "./clean";
 
 export type Volume = {
   label: string;
@@ -73,7 +74,7 @@ export type NovelBook = FoliateBook & {
   places: string[];
 };
 
-export async function makeNovelBook(novelId: number): Promise<NovelBook | null> {
+export async function makeNovelBook(novelId: number, filters: string[] = []): Promise<NovelBook | null> {
   const db = await getDb();
   const novels = await db.select<NovelRow[]>("SELECT * FROM novels WHERE id = $1", [novelId]);
   const chapters = await db.select<ChapterRow[]>(
@@ -90,7 +91,8 @@ export async function makeNovelBook(novelId: number): Promise<NovelBook | null> 
       size: 20000,
       linear: "yes",
       async load() {
-        const page = chapterPage(chapter.name, await chapterBody(chapter, source));
+        const body = cleanChapter(await chapterBody(chapter, source), filters);
+        const page = chapterPage(chapter.name, body);
         url = URL.createObjectURL(new Blob([page], { type: "text/html" }));
         return url;
       },
