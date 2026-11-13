@@ -13,7 +13,9 @@
     "test": "vitest run",
     "version:set": "powershell -ExecutionPolicy Bypass -File .\\scripts\\set-version.ps1",
     "save": "node scripts/save.mjs",
-    "pull": "node scripts/pull.mjs"
+    "pull": "node scripts/pull.mjs",
+    "sync": "node scripts/sync.mjs",
+    "sync:get": "node scripts/sync.mjs get"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",

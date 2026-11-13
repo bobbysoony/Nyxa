@@ -559,3 +559,9 @@ body {
   border-radius: 4px;
   pointer-events: none;
 }
+
+.library-bar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 16px 0;
+}

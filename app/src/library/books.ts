@@ -4,8 +4,10 @@ import { makeBook } from "../../foliate-js/view.js";
 import type { FoliateBook } from "../foliate";
 import { getTitle } from "../getTitle";
 import { bookKey, type Bytes } from "./bookKey";
-import { saveCover } from "./covers";
-import { getBook, getBookByKey, listBooks, saveBook, saveBookChapters, saveBookPosition, saveBookRead } from "./db";
+import { sources } from "../sources";
+import { downloadCover, saveCover } from "./covers";
+import { sleep } from "./download";
+import { getBook, getBookByKey, listBooks, listNovels, saveBook, saveBookChapters, saveBookPosition, saveBookRead } from "./db";
 
 const appData = { baseDir: BaseDirectory.AppData };
 
@@ -51,6 +53,31 @@ export async function prepareBooks() {
       await saveBookChapters(row.id, tocHrefs(loaded.book).length);
     } catch (err) {
       console.error(`Couldn't prepare ${row.title}`, err);
+    }
+  }
+}
+
+// The library's Refresh button: asks each novel's site for its cover again, and pulls the
+// cover out of any EPUB that doesn't have one. One novel at a time, like the update check.
+export async function refreshCovers() {
+  for (const novel of await listNovels()) {
+    try {
+      const source = sources.find((s) => s.id === novel.source);
+      if (!source) continue;
+      const site = await source.parseNovel(novel.path);
+      if (site.cover) await downloadCover(`novel-${novel.id}`, site.cover);
+    } catch (err) {
+      console.error(`Couldn't refresh ${novel.name}`, err);
+    }
+    await sleep(500);
+  }
+  for (const row of await listBooks()) {
+    if (await exists(`covers/book-${row.id}.jpg`, appData)) continue;
+    try {
+      const cover = await (await loadBook(row.id))?.book.getCover?.();
+      if (cover) await saveCover(`book-${row.id}`, cover);
+    } catch (err) {
+      console.error(`Couldn't refresh ${row.title}`, err);
     }
   }
 }

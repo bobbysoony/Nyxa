@@ -135,16 +135,23 @@ function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
           }
         />
       </label>
-      <label>
+      <div>
         Font:
-        <select
-          value={settings.font}
-          onChange={(e) => onChange({ ...settings, font: e.target.value })}
-        >
-          <option value="Georgia, serif">Serif</option>
-          <option value="system-ui, sans-serif">Sans-serif</option>
-        </select>
-      </label>
+        <div className="theme-buttons">
+          <button
+            disabled={settings.font === "Georgia, serif"}
+            onClick={() => onChange({ ...settings, font: "Georgia, serif" })}
+          >
+            Serif
+          </button>
+          <button
+            disabled={settings.font === "system-ui, sans-serif"}
+            onClick={() => onChange({ ...settings, font: "system-ui, sans-serif" })}
+          >
+            Sans-serif
+          </button>
+        </div>
+      </div>
 
       <label>
         Hide paragraphs containing (one phrase per line):

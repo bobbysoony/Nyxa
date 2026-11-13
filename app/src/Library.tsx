@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { listBooks, listNovels } from "./library/db";
-import { moveOldBooks, prepareBooks } from "./library/books";
+import { moveOldBooks, prepareBooks, refreshCovers } from "./library/books";
 import { coverLink } from "./library/covers";
 
 // One cover in the grid: a novel or an EPUB, the library treats them the same.
@@ -26,6 +26,8 @@ function progressText(read: number, total: number) {
 
 function Library({ onReadNovel, onReadBook, found }: LibraryProps) {
   const [tiles, setTiles] = useState<Tile[] | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [reload, setReload] = useState(0); // bumping it re-runs the effect below, so new covers show
 
   useEffect(() => {
     let links: string[] = [];
@@ -35,7 +37,14 @@ function Library({ onReadNovel, onReadBook, found }: LibraryProps) {
     });
     // blob: links hold the picture in memory until they're revoked, so free them when you leave.
     return () => links.forEach((link) => URL.revokeObjectURL(link));
-  }, [found]);
+  }, [found, reload]);
+
+  async function refresh() {
+    setRefreshing(true);
+    await refreshCovers();
+    setRefreshing(false);
+    setReload((n) => n + 1);
+  }
 
   async function loadTiles() {
     await moveOldBooks();
@@ -75,25 +84,32 @@ function Library({ onReadNovel, onReadBook, found }: LibraryProps) {
   }
 
   return (
-    <div className="library">
-      {tiles.map((tile) => (
-        <button key={tile.name} className="library-tile" onClick={tile.open}>
-          <span className="library-cover">
-            {tile.cover ? <img src={tile.cover} alt="" /> : <span className="library-no-cover">{tile.title}</span>}
-            {tile.fresh > 0 && <span className="library-new">{tile.fresh} new</span>}
-            {tile.finished && (
-              <span className="library-done" aria-label="Read">
-                <svg viewBox="0 0 16 16" aria-hidden="true">
-                  <path d="M3 8.5 L6.5 12 L13 4.5" />
-                </svg>
-              </span>
-            )}
-          </span>
-          <span className="library-title">{tile.title}</span>
-          {tile.progress && <span className="library-progress">{tile.progress}</span>}
+    <>
+      <div className="library-bar">
+        <button onClick={refresh} disabled={refreshing}>
+          {refreshing ? "Refreshing…" : "Refresh"}
         </button>
-      ))}
-    </div>
+      </div>
+      <div className="library">
+        {tiles.map((tile) => (
+          <button key={tile.name} className="library-tile" onClick={tile.open}>
+            <span className="library-cover">
+              {tile.cover ? <img src={tile.cover} alt="" /> : <span className="library-no-cover">{tile.title}</span>}
+              {tile.fresh > 0 && <span className="library-new">{tile.fresh} new</span>}
+              {tile.finished && (
+                <span className="library-done" aria-label="Read">
+                  <svg viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M3 8.5 L6.5 12 L13 4.5" />
+                  </svg>
+                </span>
+              )}
+            </span>
+            <span className="library-title">{tile.title}</span>
+            {tile.progress && <span className="library-progress">{tile.progress}</span>}
+          </button>
+        ))}
+      </div>
+    </>
   );
 }
 
