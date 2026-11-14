@@ -24,10 +24,11 @@ export function sortTiles(tiles: Tile[], sort: Sort) {
   if (sort === "recent") {
     // newest first, and if two are the same (like never opened) fall back to A to Z
     sorted.sort((a, b) => b.openedAt - a.openedAt || a.title.localeCompare(b.title));
-  } else if (sort === "title") {
-    sorted.sort((a, b) => a.title.localeCompare(b.title));
   } else if (sort === "newChapters") {
     sorted.sort((a, b) => b.fresh - a.fresh || a.title.localeCompare(b.title));
+  } else {
+    // A to Z, and the fallback if a new sort ever gets added without its own branch
+    sorted.sort((a, b) => a.title.localeCompare(b.title));
   }
   return sorted;
 }
