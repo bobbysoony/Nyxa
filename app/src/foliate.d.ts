@@ -41,7 +41,7 @@ export type FoliateBook = {
 
 export interface FoliateView extends HTMLElement {
   book: FoliateBook;
-  renderer: HTMLElement & { setStyles(css: string): void };
+  renderer: HTMLElement & { setStyles(css: string): void; getContents(): { doc: Document }[] };
   open(book: File | FoliateBook): Promise<void>;
   init(options: { lastLocation?: string; showTextStart?: boolean }): Promise<void>;
   goTo(target: string | number): Promise<unknown>;

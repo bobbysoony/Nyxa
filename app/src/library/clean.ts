@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+import type { Swap } from "../settings";
 
 // Each rule is one kind of junk line that sites add to chapters.
 // A paragraph that matches any rule is removed. Every rule has a test in clean.test.ts.
@@ -25,14 +26,50 @@ export function tidy(text: string) {
 }
 
 // `myFilters` are the reader's own phrases from Settings: plain text, not regular expressions.
+export function matchesMyFilter(line: string, myFilters: string[]) {
+  const lower = line.toLowerCase();
+  return myFilters.some((filter) => {
+    const phrase = tidy(filter).toLowerCase();
+    return phrase !== "" && lower.includes(phrase);
+  });
+}
+
 export function isJunk(line: string, myFilters: string[] = []) {
   if (line === "") return true;
-  const lower = line.toLowerCase();
-  for (const filter of myFilters) {
-    const phrase = tidy(filter).toLowerCase();
-    if (phrase !== "" && lower.includes(phrase)) return true;
+  return matchesMyFilter(line, myFilters) || junkRules.some((rule) => rule.test(line));
+}
+
+// cut the text at every find, then glue the pieces back with the new words. An empty find would cut between every letter, so skip those
+export function swapText(text: string, swaps: Swap[]) {
+  for (const swap of swaps) {
+    if (swap.find !== "") text = text.split(swap.find).join(swap.replace);
   }
-  return junkRules.some((rule) => rule.test(line));
+  return text;
+}
+
+// each bit of text's words from before any swap, so taking a swap away can put them back
+const originals = new WeakMap<Text, string>();
+
+// The reader's swaps, on a chapter that's already showing. Changes the text right there, no reload, so nothing flickers.
+// Only the story paragraphs, so the chapter title at the top stays as the site wrote it.
+export function applySwaps(doc: Document, swaps: Swap[]) {
+  for (const p of doc.querySelectorAll("body > p")) {
+    const walker = doc.createTreeWalker(p, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode() as Text | null; node; node = walker.nextNode() as Text | null) {
+      const original = originals.get(node) ?? node.data;
+      originals.set(node, original);
+      const swapped = swapText(original, swaps);
+      if (node.data !== swapped) node.data = swapped;
+    }
+  }
+}
+
+// The reader's filters, on a chapter that's already showing. Hidden, not removed,
+// so changing a filter shows the paragraph again and paragraph numbers (saved places) don't shift.
+export function hideMyFilters(doc: Document, myFilters: string[]) {
+  for (const p of doc.querySelectorAll<HTMLElement>("body > p")) {
+    p.hidden = !p.querySelector("img") && matchesMyFilter(tidy(p.textContent ?? ""), myFilters);
+  }
 }
 
 // Takes a chapter's HTML and gives back a copy without the junk paragraphs,

@@ -7,6 +7,7 @@ import type { FoliateBook, FoliateSection } from "../foliate";
 import { findParagraph } from "./position";
 import { cleanChapter } from "./clean";
 
+
 export type Volume = {
   label: string;
   chapters: ChapterRow[];
@@ -74,7 +75,9 @@ export type NovelBook = FoliateBook & {
   places: string[];
 };
 
-export async function makeNovelBook(novelId: number, filters: string[] = []): Promise<NovelBook | null> {
+// Your own hidden lines and swaps aren't baked in here: the Reader puts them on the page after it loads,
+// so changing one shows right away without reopening the book.
+export async function makeNovelBook(novelId: number): Promise<NovelBook | null> {
   const db = await getDb();
   const novels = await db.select<NovelRow[]>("SELECT * FROM novels WHERE id = $1", [novelId]);
   const chapters = await db.select<ChapterRow[]>(
@@ -91,7 +94,7 @@ export async function makeNovelBook(novelId: number, filters: string[] = []): Pr
       size: 20000,
       linear: "yes",
       async load() {
-        const body = cleanChapter(await chapterBody(chapter, source), filters);
+        const body = cleanChapter(await chapterBody(chapter, source));
         const page = chapterPage(chapter.name, body);
         url = URL.createObjectURL(new Blob([page], { type: "text/html" }));
         return url;

@@ -5,8 +5,9 @@ export function positionHref(chapter: number, paragraph: number) {
   return `chapter-${chapter}#p${paragraph}`;
 }
 
+// paragraphs you hid with your own filters don't count, so hiding or showing one doesn't move saved places
 function storyParagraphs(doc: Document) {
-  return Array.from(doc.querySelectorAll("body > p"));
+  return Array.from(doc.querySelectorAll("body > p:not([hidden])"));
 }
 
 // "p14" → the 15th paragraph of the chapter (counting from 0).
@@ -27,6 +28,7 @@ export function paragraphAt(range?: Range) {
 
   const paragraphs = storyParagraphs(top.ownerDocument);
   const index = paragraphs.indexOf(top);
+  if (index < 0) return 0; // a hidden paragraph isn't in the count
   if (node === top || range.startOffset === 0) return index;
 
   const next = paragraphs[index + 1];

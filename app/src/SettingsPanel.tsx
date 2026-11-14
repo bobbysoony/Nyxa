@@ -14,6 +14,8 @@ type SettingsPanelProps = {
 function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
   const scrolled = settings.readingMode === "scrolled";
   const [version, setVersion] = useState("");
+  const [showRules, setShowRules] = useState(false);
+  const ruleCount = settings.filters.length + settings.novelFilters.length + settings.swaps.length;
 
   useEffect(() => {
     loadVersion();
@@ -149,14 +151,52 @@ function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
         />
       </div>
 
-      <label>
-        Hide paragraphs containing (one phrase per line):
-        <textarea
-          rows={3}
-          value={settings.filters.join("\n")}
-          onChange={(e) => onChange({ ...settings, filters: e.target.value.split("\n") })}
-        />
-      </label>
+      {ruleCount > 0 && (
+        <button onClick={() => setShowRules(true)}>Hidden & replaced words ({ruleCount})</button>
+      )}
+
+      {/* pops out over everything, same look as the "are you sure?" box */}
+      {showRules && (
+        <>
+          <div className="backdrop" onClick={() => setShowRules(false)}></div>
+          <div
+            className="confirm rules"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Hidden and replaced words"
+            onKeyDown={(e) => e.key === "Escape" && setShowRules(false)}
+          >
+            {settings.filters.length + settings.novelFilters.length > 0 && <strong>Hidden lines</strong>}
+            {settings.filters.map((phrase, i) => (
+              <div className="swap-row" key={"all" + i}>
+                <span>“{phrase}” · whole library</span>
+                <button aria-label="Remove" onClick={() => onChange({ ...settings, filters: settings.filters.filter((_, j) => j !== i) })}>✕</button>
+              </div>
+            ))}
+            {settings.novelFilters.map((hide, i) => (
+              <div className="swap-row" key={"one" + i}>
+                <span>“{hide.find}” · one novel</span>
+                <button aria-label="Remove" onClick={() => onChange({ ...settings, novelFilters: settings.novelFilters.filter((_, j) => j !== i) })}>✕</button>
+              </div>
+            ))}
+
+            {settings.swaps.length > 0 && <strong>Replaced words</strong>}
+            {settings.swaps.map((swap, i) => (
+              <div className="swap-row" key={i}>
+                <span>
+                  “{swap.find}” → {swap.replace === "" ? "(deleted)" : `“${swap.replace}”`}
+                  {swap.novelId === undefined ? " · whole library" : " · one novel"}
+                </span>
+                <button aria-label="Remove" onClick={() => onChange({ ...settings, swaps: settings.swaps.filter((_, j) => j !== i) })}>✕</button>
+              </div>
+            ))}
+
+            <div className="confirm-buttons">
+              <button autoFocus onClick={() => setShowRules(false)}>Close</button>
+            </div>
+          </div>
+        </>
+      )}
 
       <button onClick={() => onChange(defaultSettings)}>Reset to default</button>
 

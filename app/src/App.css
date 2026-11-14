@@ -621,3 +621,60 @@ body {
 .dropdown-list button[aria-selected="true"] {
   border-color: var(--text);
 }
+
+/* Fix bar: shows above the bottom bar when you select words in a novel */
+.fix-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--text);
+}
+
+.fix-text {
+  flex: 1;
+  min-width: 120px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis; /* long selections end in … so the buttons always fit */
+}
+
+.fix-bar input {
+  flex: 1;
+  min-width: 120px;
+  padding: 6px;
+  border: 1px solid var(--text);
+  border-radius: 8px;
+  font: inherit;
+  color: var(--text);
+  background: var(--page);
+}
+
+.swap-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+/* the fix bar sits at the bottom of the screen, so its drop-down opens upwards */
+.fix-bar .dropdown-list {
+  top: auto;
+  bottom: calc(100% + 4px);
+}
+
+/* the hidden & replaced words popup: one row under another, scrolls if you've made lots */
+.rules {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* .reader-bar span cuts text short with …, but here you want to read the whole rule */
+.rules span {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

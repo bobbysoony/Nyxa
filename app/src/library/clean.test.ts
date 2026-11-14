@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { cleanChapter, isCredit, isJunk, tidy } from "./clean";
+import { cleanChapter, isCredit, isJunk, swapText, tidy } from "./clean";
 
 test("tidy squeezes spaces and trims the ends", () => {
   expect(tidy("  Hello \n   world\u00a0 ")).toBe("Hello world");
@@ -90,4 +90,22 @@ test("a line that is only a web address is junk", () => {
 
 test("a story line with a web address in it stays", () => {
   expect(isJunk("He typed https://some-site.example into the bar.")).toBe(false);
+});
+
+test("a swap changes the words every time they show up", () => {
+  expect(swapText("Sunny ran. He said Sunny twice.", [{ find: "Sunny", replace: "Sunless" }])).toBe(
+    "Sunless ran. He said Sunless twice.",
+  );
+});
+
+test("a swap with nothing to put in deletes just those words", () => {
+  expect(swapText("He left. (TN: lol)", [{ find: " (TN: lol)", replace: "" }])).toBe("He left.");
+});
+
+test("a swap minds capitals", () => {
+  expect(swapText("the Em dash", [{ find: "em", replace: "X" }])).toBe("the Em dash");
+});
+
+test("a swap with an empty find does nothing", () => {
+  expect(swapText("Hello", [{ find: "", replace: "X" }])).toBe("Hello");
 });

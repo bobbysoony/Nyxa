@@ -9,7 +9,15 @@ export type Settings = {
   wordsPerMinute: number;
   showTimeLeft: boolean;
   filters: string[];
+  swaps: Swap[];
+  novelFilters: NovelFilter[];
 };
+
+// One "swap these words for those words" rule, made in the Reader with the Fix bar.
+// novelId is the one novel it counts for, leave it out and it counts for the whole library
+export type Swap = { find: string; replace: string; novelId?: number };
+// Same idea for "hide every line with these words", but only for the one novel it was made in
+export type NovelFilter = { find: string; novelId: number };
 
 // What Nyxa uses until you change something.
 export const defaultSettings: Settings = {
@@ -21,7 +29,9 @@ export const defaultSettings: Settings = {
   readingMode: "paginated",
   wordsPerMinute: 250,
   showTimeLeft: true,
-  filters: []
+  filters: [],
+  swaps: [],
+  novelFilters: []
 };
 
 type Theme = {

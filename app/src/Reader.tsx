@@ -24,6 +24,9 @@ import { addBook, loadBook, tocHrefs } from "./library/books";
 import { chapterFromHref, paragraphAt, positionHref } from "./library/position";
 import { finishedChapter } from "./library/finished";
 import { timeLeft, wordsLeft } from "./library/timeleft";
+import { applySwaps, hideMyFilters, tidy } from "./library/clean";
+import FixBar from "./FixBar";
+import Confirm from "./Confirm";
 
 
 type ReaderProps = {
@@ -54,6 +57,8 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
   const [place, setPlace] = useState("");
   const [readChapters, setReadChapters] = useState<Set<number> | null>(null);
   const [words, setWords] = useState(0);
+  const [picked, setPicked] = useState("");
+  const [hiding, setHiding] = useState<{ everywhere: boolean } | null>(null);
 
 
   function handleKey(e: KeyboardEvent) {
@@ -98,13 +103,29 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
     else reopenLastBook();
   }
 
+  // The load listener below is made once per book, so it reads the settings from here to get the newest ones.
+  const settingsRef = useRef(settings);
+
   useEffect(() => {
+    settingsRef.current = settings;
     applySettings();
   }, [settings]);
+
+  // Your swaps and hidden lines, right on the page: no reload, so a change shows instantly.
+  // Only the whole library ones plus this novel's own, another novel's stay out.
+  function applyMyFixes(doc: Document) {
+    const novelId = novelRef.current?.novelId;
+    if (novelId === undefined) return;
+    const fixes = settingsRef.current;
+    applySwaps(doc, fixes.swaps.filter((swap) => swap.novelId === undefined || swap.novelId === novelId));
+    hideMyFilters(doc, [...fixes.filters, ...fixes.novelFilters.filter((f) => f.novelId === novelId).map((f) => f.find)]);
+  }
 
   function applySettings() {
     const view = viewRef.current;
     if (!view?.renderer) return;
+    // Before setStyles: it re-lays out the page around the paragraph you're on, hidden ones included.
+    for (const { doc } of view.renderer.getContents()) applyMyFixes(doc);
     view.renderer.setStyles?.(makeBookCSS(settings));
     view.renderer.setAttribute("gap", `${settings.margin}%`);
     view.renderer.setAttribute("flow", settings.readingMode);
@@ -164,7 +185,7 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
 
   async function openNovel(id: number) {
     bookIdRef.current = null;
-    const book = await makeNovelBook(id, settings.filters);
+    const book = await makeNovelBook(id);
     if (!book) {
       setError("This novel has no chapters yet");
       return;
@@ -195,6 +216,26 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
       else updated.delete(number);
       return updated;
     });
+  }
+
+  function saveFix(fixed: Settings) {
+    onSettingsChange(fixed);
+    setPicked("");
+  }
+
+  function hideLines(yes: boolean) {
+    const everywhere = hiding?.everywhere;
+    setHiding(null);
+    if (!yes) return;
+    // a whole library one goes in filters, a this novel one remembers which novel
+    if (everywhere || !novelRef.current) saveFix({ ...settings, filters: [...settings.filters, picked] });
+    else saveFix({ ...settings, novelFilters: [...settings.novelFilters, { find: picked, novelId: novelRef.current.novelId }] });
+  }
+
+  function swapWords(replace: string, everywhere: boolean) {
+    // a whole library swap just has no novelId on it
+    const novelId = everywhere ? undefined : novelRef.current?.novelId;
+    saveFix({ ...settings, swaps: [...settings.swaps, { find: picked, replace, novelId }] });
   }
 
   function readKey(href: string) {
@@ -260,8 +301,13 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
 
     view.addEventListener("load", (e) => {
       const doc = e.detail.doc;
+      applyMyFixes(doc);
       doc.addEventListener("keydown", handleKey);
       doc.addEventListener("click", (ev) => handleBookClick(ev, doc));
+      doc.addEventListener("selectionchange", () => {
+        const text = tidy(doc.getSelection()?.toString() ?? "");
+        if (text !== "") setPicked(text);
+      });
     });
 
     await view.open(book);
@@ -327,6 +373,19 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
       )}
 
       {showContents && <div className="backdrop" onClick={() => setShowContents(false)}></div>}
+
+      {picked && novelRef.current && (
+        <FixBar key={picked} text={picked} onHide={(everywhere) => setHiding({ everywhere })} onSwap={swapWords} onClose={() => setPicked("")} />
+      )}
+      {hiding && (
+        <Confirm
+          title="Hide lines"
+          message={`Hide every line that has “${picked}” in it? This counts for ${hiding.everywhere ? "all your novels" : "this novel only"}. You can undo it in Aa.`}
+          no="Cancel"
+          yes="Hide"
+          onAnswer={hideLines}
+        />
+      )}
 
       <div className="reader-bar">
         <button onClick={() => viewRef.current?.prev()}>◀ Back</button>
