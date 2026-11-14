@@ -1,0 +1,2 @@
+ALTER TABLE novels ADD COLUMN opened_at INTEGER;
+ALTER TABLE books ADD COLUMN opened_at INTEGER;

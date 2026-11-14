@@ -2,6 +2,7 @@ import { defaultSettings, Settings } from "./settings";
 import { useEffect, useState } from "react";
 import { getVersion } from "@tauri-apps/api/app";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import Dropdown from "./Dropdown";
 
 const feedbackForm = "https://docs.google.com/forms/d/e/1FAIpQLSeja2ymZtDo_tCi4P2g4_c4NjahdpdU1B3YhD85WibXniqqzg/viewform?usp=pp_url&entry.1358451065=";
 
@@ -137,20 +138,15 @@ function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
       </label>
       <div>
         Font:
-        <div className="theme-buttons">
-          <button
-            disabled={settings.font === "Georgia, serif"}
-            onClick={() => onChange({ ...settings, font: "Georgia, serif" })}
-          >
-            Serif
-          </button>
-          <button
-            disabled={settings.font === "system-ui, sans-serif"}
-            onClick={() => onChange({ ...settings, font: "system-ui, sans-serif" })}
-          >
-            Sans-serif
-          </button>
-        </div>
+        <Dropdown
+          label="Font"
+          value={settings.font}
+          options={[
+            { value: "Georgia, serif", label: "Serif" },
+            { value: "system-ui, sans-serif", label: "Sans-serif" },
+          ]}
+          onChange={(picked) => onChange({ ...settings, font: picked })}
+        />
       </div>
 
       <label>

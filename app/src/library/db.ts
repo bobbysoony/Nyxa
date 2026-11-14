@@ -12,6 +12,7 @@ export type NovelRow = {
   last_paragraph: number;
   auto_download: number;
   auto_limit: number;
+  opened_at: number | null;
 };
 
 export type ChapterRow = {
@@ -159,6 +160,11 @@ export async function saveNovelPosition(novelId: number, chapter: number, paragr
   );
 }
 
+export async function markNovelOpened(novelId: number) {
+  const db = await getDb();
+  await db.execute("UPDATE novels SET opened_at = $1 WHERE id = $2", [Date.now(), novelId]);
+}
+
 export async function setChapterRead(novelId: number, number: number, read: boolean) {
   const db = await getDb();
   await db.execute(
@@ -187,7 +193,8 @@ export type BookRow = {
   title: string;
   position: string | null;
   read: string;
-  chapters: number; 
+  chapters: number;
+  opened_at: number | null;
 };
 
 export async function getBook(id: number) {
@@ -218,6 +225,11 @@ export async function saveBook(key: string, file: string, title: string) {
 export async function saveBookPosition(id: number, position: string) {
   const db = await getDb();
   await db.execute("UPDATE books SET position = $1 WHERE id = $2", [position, id]);
+}
+
+export async function markBookOpened(id: number) {
+  const db = await getDb();
+  await db.execute("UPDATE books SET opened_at = $1 WHERE id = $2", [Date.now(), id]);
 }
 
 export async function listBooks() {

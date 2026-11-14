@@ -563,5 +563,61 @@ body {
 .library-bar {
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
   padding: 16px 16px 0;
+}
+
+.library-screen {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.library-bar input {
+  flex: 1;
+  min-width: 0;
+}
+
+.library-heading {
+  margin: 16px 16px 0;
+  font-size: 0.9em;
+  opacity: 0.7;
+}
+
+/* Nyxa's own drop-down: the list hangs under its button */
+.dropdown {
+  position: relative;
+}
+
+.dropdown-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 29;
+}
+
+.dropdown-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 30; /* above the see through sheet, so the options can be tapped */
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 100%;
+  padding: 6px;
+  border: 1px solid var(--text);
+  border-radius: 8px;
+  background: var(--page);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dropdown-list button {
+  border-color: transparent;
+  box-shadow: none;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.dropdown-list button[aria-selected="true"] {
+  border-color: var(--text);
 }

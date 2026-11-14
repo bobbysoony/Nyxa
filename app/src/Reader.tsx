@@ -17,6 +17,8 @@ import {
   saveBookRead,
   saveNovelPosition,
   setChapterRead,
+  markBookOpened,
+  markNovelOpened,
 } from "./library/db";
 import { addBook, loadBook, tocHrefs } from "./library/books";
 import { chapterFromHref, paragraphAt, positionHref } from "./library/position";
@@ -135,6 +137,7 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
     const store = await load("nyxa.json");
     await store.set("lastNovel", null);
     await store.set("lastBookId", id);
+    await markBookOpened(id);
     await openBook(loaded.book, loaded.row.position ?? undefined);
     return loaded.row.title;
   }
@@ -169,6 +172,7 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
 
     const store = await load("nyxa.json");
     await store.set("lastNovel", id);
+    await markNovelOpened(id);
 
     const novel = await getNovel(id);
     const position = novel?.last_chapter
