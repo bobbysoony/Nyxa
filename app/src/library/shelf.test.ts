@@ -1,8 +1,8 @@
 import { expect, test } from "vitest";
-import { continueReading, searchTiles, sortTiles, type Tile } from "./shelf";
+import { continueReading, listTiles, searchTiles, sortTiles, type Tile } from "./shelf";
 
 function tile(title: string, openedAt = 0, finished = false): Tile {
-  return { name: title, title, cover: null, finished, progress: "", fresh: 0, openedAt, open: () => {} };
+  return { name: title, title, cover: null, finished, progress: "", fresh: 0, openedAt, list: "reading", open: () => {} };
 }
 
 const titles = (tiles: Tile[]) => tiles.map((t) => t.title);
@@ -45,4 +45,21 @@ test("continue reading is the last 3 you opened, without finished or never opene
 test("sort by new chapters puts the most new chapters first", () => {
   const tiles = [tile("Abe"), { ...tile("Dune"), fresh: 2 }, { ...tile("Emma"), fresh: 7 }];
   expect(titles(sortTiles(tiles, "newChapters"))).toEqual(["Emma", "Dune", "Abe"]);
+});
+
+test("a list keeps only its own titles, and all keeps everything", () => {
+  const tiles = [tile("Abe"), { ...tile("Dune"), list: "paused" as const }, { ...tile("Emma"), list: "dropped" as const }];
+  expect(titles(listTiles(tiles, "paused"))).toEqual(["Dune"]);
+  expect(titles(listTiles(tiles, "completed"))).toEqual([]);
+  expect(titles(listTiles(tiles, "all"))).toEqual(["Abe", "Dune", "Emma"]);
+});
+
+test("continue reading leaves out titles that aren't on Reading or Rereading", () => {
+  const tiles = [tile("Abe", 100), { ...tile("Dune", 900), list: "dropped" as const }];
+  expect(titles(continueReading(tiles))).toEqual(["Abe"]);
+});
+
+test("a title you're rereading is in continue reading too", () => {
+  const tiles = [tile("Abe", 100), { ...tile("Dune", 900), list: "rereading" as const }];
+  expect(titles(continueReading(tiles))).toEqual(["Dune", "Abe"]);
 });

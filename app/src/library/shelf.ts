@@ -1,3 +1,5 @@
+import type { List } from "./lists";
+
 // One cover in the grid: a novel or an EPUB, the library treats them the same.
 export type Tile = {
   name: string; // "novel-1" or "book-3", also the cover's file name
@@ -7,6 +9,7 @@ export type Tile = {
   progress: string;
   fresh: number;
   openedAt: number; // 0 if you never opened it
+  list: List;
   open: () => void;
 };
 
@@ -17,6 +20,12 @@ export function searchTiles(tiles: Tile[], query: string) {
   const wanted = query.trim().toLowerCase();
   if (wanted === "") return tiles;
   return tiles.filter((tile) => tile.title.toLowerCase().includes(wanted));
+}
+
+// only keeps the tiles on the list you picked, "all" keeps everything
+export function listTiles(tiles: Tile[], list: List | "all") {
+  if (list === "all") return tiles;
+  return tiles.filter((tile) => tile.list === list);
 }
 
 export function sortTiles(tiles: Tile[], sort: Sort) {
@@ -35,6 +44,8 @@ export function sortTiles(tiles: Tile[], sort: Sort) {
 
 // the few things you opened last and havent finished, for the row at the top
 export function continueReading(tiles: Tile[], count = 3) {
-  const started = tiles.filter((tile) => tile.openedAt > 0 && !tile.finished);
+  const started = [...listTiles(tiles, "reading"), ...listTiles(tiles, "rereading")].filter(
+    (tile) => tile.openedAt > 0 && !tile.finished,
+  );
   return sortTiles(started, "recent").slice(0, count);
 }

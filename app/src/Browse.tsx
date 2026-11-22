@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import { sources } from "./sources";
 import type { NovelItem, SourceNovel } from "./sources/types";
 import { queueChapters } from "./library/download";
-import { getChapters, listNovels, saveAutoDownload, saveNovel, setAllRead, type LibraryRow } from "./library/db";
+import { getChapters, listNovels, saveAutoDownload, saveNovel, saveNovelList, setAllRead, type LibraryRow } from "./library/db";
+import { lists, toList, type List } from "./library/lists";
+import Dropdown from "./Dropdown";
 import { downloadCover } from "./library/covers";
 import AutoDownload from "./AutoDownload";
 
@@ -106,6 +108,14 @@ function Browse({ onRead, novelId }: BrowseProps) {
     setLibrary(await listNovels());
   }
 
+  async function moveToList(list: List) {
+    if (!libraryId) return;
+    await saveNovelList(libraryId, list);
+    // rereading starts you from scratch like AniList, so every tick goes and it shows up in Continue reading again
+    if (list === "rereading") await setAllRead(libraryId, false);
+    setLibrary(await listNovels());
+  }
+
   async function addToLibrary() {
     if (!novel) return;
     setStatus("Saving…");
@@ -186,6 +196,14 @@ function Browse({ onRead, novelId }: BrowseProps) {
                   )}
                 </span>
               </button>
+              {libraryRow && (
+                <Dropdown
+                  label="List"
+                  value={toList(libraryRow.list)}
+                  options={lists}
+                  onChange={(picked) => moveToList(toList(picked))}
+                />
+              )}
               {libraryRow && (
                 <button onClick={() => setShowAuto(true)}>
                   ⚙ Auto-download: {libraryRow.auto_download ? `up to ${libraryRow.auto_limit}` : "off"}

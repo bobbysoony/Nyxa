@@ -90,7 +90,8 @@ button {
   gap: 14px;
   width: 260px;
   max-width: calc(100vw - 32px);
-  max-height: calc(100vh - 150px); /* on a small screen the panel scrolls instead of running off the bottom */
+  max-height: calc(100vh - 150px);
+  /* on a small screen the panel scrolls instead of running off the bottom */
   overflow-y: auto;
   padding: 16px;
   border: 1px solid var(--text);
@@ -417,17 +418,31 @@ body {
 }
 
 .library-title {
-  display: -webkit-box;
+  /* titles stay on one line so every tile lines up, long ones get … at the end */
+  white-space: nowrap;
   overflow: hidden;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  text-overflow: ellipsis;
   font-size: 0.85em;
   line-height: 1.3;
 }
 
 .library-progress {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   font-size: 0.75em;
   opacity: 0.7;
+  white-space: nowrap;
+}
+
+.library-kind {
+  flex: none;
+  width: 1.1em;
+  height: 1.1em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.3;
+  stroke-linejoin: round;
 }
 
 .library-status {
@@ -565,6 +580,7 @@ body {
   justify-content: flex-end;
   gap: 8px;
   padding: 16px 16px 0;
+  flex-wrap: wrap;
 }
 
 .library-screen {
@@ -576,6 +592,7 @@ body {
 .library-bar input {
   flex: 1;
   min-width: 0;
+  min-width: 140px;
 }
 
 .library-heading {
@@ -599,7 +616,8 @@ body {
   position: absolute;
   top: calc(100% + 4px);
   right: 0;
-  z-index: 30; /* above the see through sheet, so the options can be tapped */
+  z-index: 30;
+  /* above the see through sheet, so the options can be tapped */
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -637,7 +655,8 @@ body {
   min-width: 120px;
   overflow: hidden;
   white-space: nowrap;
-  text-overflow: ellipsis; /* long selections end in … so the buttons always fit */
+  text-overflow: ellipsis;
+  /* long selections end in … so the buttons always fit */
 }
 
 .fix-bar input {
@@ -677,4 +696,13 @@ body {
 .rules span {
   white-space: normal;
   overflow-wrap: anywhere;
+}
+
+.novel-page .dropdown {
+  width: fit-content;
+}
+
+.novel-page .dropdown-list {
+  left: 0;
+  right: auto;
 }

@@ -1,5 +1,6 @@
 import Database from "@tauri-apps/plugin-sql";
 import type { ChapterItem, SourceNovel } from "../sources/types";
+import type { List } from "./lists";
 
 export type NovelRow = {
   id: number;
@@ -13,6 +14,7 @@ export type NovelRow = {
   auto_download: number;
   auto_limit: number;
   opened_at: number | null;
+  list: string;
 };
 
 export type ChapterRow = {
@@ -163,6 +165,12 @@ export async function saveNovelPosition(novelId: number, chapter: number, paragr
 export async function markNovelOpened(novelId: number) {
   const db = await getDb();
   await db.execute("UPDATE novels SET opened_at = $1 WHERE id = $2", [Date.now(), novelId]);
+}
+
+// moves a novel to another list, like from Reading to On hold
+export async function saveNovelList(novelId: number, list: List) {
+  const db = await getDb();
+  await db.execute("UPDATE novels SET list = $1 WHERE id = $2", [list, novelId]);
 }
 
 export async function setChapterRead(novelId: number, number: number, read: boolean) {

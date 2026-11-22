@@ -1,0 +1,1 @@
+ALTER TABLE novels ADD COLUMN list TEXT NOT NULL DEFAULT 'reading';

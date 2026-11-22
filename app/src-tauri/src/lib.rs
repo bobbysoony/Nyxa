@@ -79,6 +79,12 @@ fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/010_opened_at.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 11,
+            description: "reading lists",
+            sql: include_str!("../migrations/011_list.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 

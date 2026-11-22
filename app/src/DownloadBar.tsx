@@ -8,6 +8,14 @@ function DownloadBar() {
   // watchDownloads hands back its own "stop watching", which React runs when the bar goes away.
   useEffect(() => watchDownloads(setDownloads), []);
 
+  const finished = downloads !== null && downloads.waiting + downloads.downloading === 0 && downloads.done > 0 && downloads.failed === 0;
+  // once everything's done the bar hides itself after 15 seconds, but if something failed it stays so you can hit Try again
+  useEffect(() => {
+    if (!finished) return;
+    const timer = setTimeout(clearFinished, 15_000);
+    return () => clearTimeout(timer); // if new downloads start before the 15 seconds are up, the timer gets cancelled
+  }, [finished]);
+
   if (!downloads) return null;
   const left = downloads.waiting + downloads.downloading;
   if (left + downloads.done + downloads.failed === 0) return null; // nothing to show

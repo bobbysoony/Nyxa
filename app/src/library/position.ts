@@ -5,15 +5,20 @@ export function positionHref(chapter: number, paragraph: number) {
   return `chapter-${chapter}#p${paragraph}`;
 }
 
-// paragraphs you hid with your own filters don't count, so hiding or showing one doesn't move saved places
+// every paragraph counts, hidden ones too, so hiding or showing one doesn't move saved places
 function storyParagraphs(doc: Document) {
-  return Array.from(doc.querySelectorAll("body > p:not([hidden])"));
+  return Array.from(doc.querySelectorAll<HTMLElement>("body > p"));
 }
 
 // "p14" → the 15th paragraph of the chapter (counting from 0).
 export function findParagraph(doc: Document, fragment?: string) {
   if (!fragment?.startsWith("p")) return null;
-  return storyParagraphs(doc)[Number(fragment.slice(1))] ?? null;
+  const paragraphs = storyParagraphs(doc);
+  // a hidden one can't be shown, so land on the next one you can see
+  for (let i = Number(fragment.slice(1)); i < paragraphs.length; i++) {
+    if (!paragraphs[i].hidden) return paragraphs[i];
+  }
+  return null;
 }
 
 // Which paragraph does this page belong to? The first paragraph that
@@ -27,8 +32,7 @@ export function paragraphAt(range?: Range) {
   if (!top) return 0;
 
   const paragraphs = storyParagraphs(top.ownerDocument);
-  const index = paragraphs.indexOf(top);
-  if (index < 0) return 0; // a hidden paragraph isn't in the count
+  const index = paragraphs.indexOf(top as HTMLElement);
   if (node === top || range.startOffset === 0) return index;
 
   const next = paragraphs[index + 1];

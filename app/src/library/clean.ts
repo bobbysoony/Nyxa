@@ -34,9 +34,9 @@ export function matchesMyFilter(line: string, myFilters: string[]) {
   });
 }
 
-export function isJunk(line: string, myFilters: string[] = []) {
+export function isJunk(line: string) {
   if (line === "") return true;
-  return matchesMyFilter(line, myFilters) || junkRules.some((rule) => rule.test(line));
+  return junkRules.some((rule) => rule.test(line));
 }
 
 // cut the text at every find, then glue the pieces back with the new words. An empty find would cut between every letter, so skip those
@@ -74,13 +74,13 @@ export function hideMyFilters(doc: Document, myFilters: string[]) {
 
 // Takes a chapter's HTML and gives back a copy without the junk paragraphs,
 // and with the credit lines gathered into one line at the end.
-export function cleanChapter(html: string, myFilters: string[] = []) {
+export function cleanChapter(html: string) {
   const $ = cheerio.load(html, null, false); // false = a piece of a page, so no <html> or <body> gets added
   const credits = new Set<string>(); // a Set keeps each credit once, however many times the chapter repeats it
   $("p").each((_, p) => {
     if ($(p).find("img").length > 0) return; // a picture is never junk
     const line = tidy($(p).text());
-    if (isJunk(line, myFilters)) {
+    if (isJunk(line)) {
       $(p).remove();
     } else if (isCredit(line)) {
       credits.add(line);

@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { listBooks, listNovels } from "./library/db";
 import { moveOldBooks, prepareBooks, refreshCovers } from "./library/books";
 import { coverLink } from "./library/covers";
-import { continueReading, searchTiles, sortTiles, type Sort, type Tile } from "./library/shelf";
+import { continueReading, listTiles, searchTiles, sortTiles, type Sort, type Tile } from "./library/shelf";
+import { lists, toList, type List } from "./library/lists";
 import Dropdown from "./Dropdown";
 
 type LibraryProps = {
@@ -30,8 +31,22 @@ function TileButton({ tile }: { tile: Tile }) {
           </span>
         )}
       </span>
-      <span className="library-title">{tile.title}</span>
-      {tile.progress && <span className="library-progress">{tile.progress}</span>}
+      <span className="library-title" title={tile.title}>{tile.title}</span>
+      <span className="library-progress">
+        {tile.name.startsWith("book-") ? (
+          <svg className="library-kind" viewBox="0 0 16 16" role="img" aria-label="EPUB">
+            <title>EPUB</title>
+            <path d="M8 4 C6 3 4 3 2 3.5 V13 C4 12.5 6 12.5 8 13.5 C10 12.5 12 12.5 14 13 V3.5 C12 3 10 3 8 4 Z M8 4 V13.5" />
+          </svg>
+        ) : (
+          <svg className="library-kind" viewBox="0 0 16 16" role="img" aria-label="Online">
+            <title>Online</title>
+            <circle cx="8" cy="8" r="6" />
+            <path d="M2 8 H14 M8 2 C5.5 5 5.5 11 8 14 M8 2 C10.5 5 10.5 11 8 14" />
+          </svg>
+        )}
+        {tile.progress}
+      </span>
     </button>
   );
 }
@@ -40,6 +55,7 @@ function Library({ onReadNovel, onReadBook, found }: LibraryProps) {
   const [tiles, setTiles] = useState<Tile[] | null>(null);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<Sort>("title");
+  const [list, setList] = useState<List | "all">("all");
   const [refreshing, setRefreshing] = useState(false);
   const [reload, setReload] = useState(0); // bumping it re-runs the effect below, so new covers show
 
@@ -74,6 +90,7 @@ function Library({ onReadNovel, onReadBook, found }: LibraryProps) {
         progress: progressText(novel.total - novel.unread, novel.total),
         fresh: novel.fresh,
         openedAt: novel.opened_at ?? 0,
+        list: toList(novel.list),
         open: () => onReadNovel(novel.id),
       });
     }
@@ -88,6 +105,7 @@ function Library({ onReadNovel, onReadBook, found }: LibraryProps) {
         progress: progressText(ticks.length, book.chapters),
         fresh: 0,
         openedAt: book.opened_at ?? 0,
+        list: "reading", // EPUBs can't go on other lists yet
         open: () => onReadBook(book.id),
       });
     }
@@ -99,8 +117,10 @@ function Library({ onReadNovel, onReadBook, found }: LibraryProps) {
     return <p className="library-status">Nothing here yet: open an EPUB, or add a novel in Browse.</p>;
   }
 
-  const shown = sortTiles(searchTiles(tiles, query), sort);
-  const reading = query.trim() === "" ? continueReading(tiles) : []; // searching hides the row, you're looking for something else
+  const shown = sortTiles(searchTiles(listTiles(tiles, list), query), sort);
+  const listName = lists.find((item) => item.value === list)?.label;
+  // searching or picking a list hides the row, you're looking for something else
+  const reading = query.trim() === "" && list === "all" ? continueReading(tiles) : [];
 
   return (
     <div className="library-screen">
@@ -122,6 +142,14 @@ function Library({ onReadNovel, onReadBook, found }: LibraryProps) {
           ]}
           onChange={(picked) => setSort(picked as Sort)}
         />
+        <Dropdown
+          label="List"
+          value={list}
+          options={[
+            { value: "all", label: `All lists (${tiles.length})` },
+            ...lists.map((item) => ({ value: item.value, label: `${item.label} (${listTiles(tiles, item.value).length})` })),
+          ]} onChange={(picked) => setList(picked as List | "all")}
+        />
         <button onClick={refresh} disabled={refreshing}>
           {refreshing ? "Refreshing…" : "Refresh"}
         </button>
@@ -138,8 +166,13 @@ function Library({ onReadNovel, onReadBook, found }: LibraryProps) {
           <h3 className="library-heading">Everything</h3>
         </>
       )}
+      {listName && <h3 className="library-heading">{listName}</h3>}
 
-      {shown.length === 0 && <p className="library-status">Nothing in your library matches "{query}".</p>}
+      {shown.length === 0 && (
+        <p className="library-status">
+          {query.trim() === "" ? "Nothing on this list yet." : `Nothing in your library matches "${query}".`}
+        </p>
+      )}
       <div className="library">
         {shown.map((tile) => (
           <TileButton key={tile.name} tile={tile} />
