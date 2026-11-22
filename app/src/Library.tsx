@@ -39,8 +39,8 @@ function TileButton({ tile }: { tile: Tile }) {
             <path d="M8 4 C6 3 4 3 2 3.5 V13 C4 12.5 6 12.5 8 13.5 C10 12.5 12 12.5 14 13 V3.5 C12 3 10 3 8 4 Z M8 4 V13.5" />
           </svg>
         ) : (
-          <svg className="library-kind" viewBox="0 0 16 16" role="img" aria-label="Online">
-            <title>Online</title>
+          <svg className="library-kind" viewBox="0 0 16 16" role="img" aria-label="Web novel">
+            <title>Web novel</title>
             <circle cx="8" cy="8" r="6" />
             <path d="M2 8 H14 M8 2 C5.5 5 5.5 11 8 14 M8 2 C10.5 5 10.5 11 8 14" />
           </svg>
