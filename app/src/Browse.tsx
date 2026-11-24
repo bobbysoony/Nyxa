@@ -5,7 +5,7 @@ import { queueChapters } from "./library/download";
 import {
   getChapters,
   listNovels,
-  markReadBefore,
+  setReadUpTo,
   saveAutoDownload,
   saveNovel,
   saveNovelList,
@@ -112,7 +112,7 @@ function Browse({ onRead, novelId }: BrowseProps) {
   async function markRead(choice: ReadChoice) {
     setShowRead(false);
     if (!libraryId) return;
-    if (choice.kind === "upTo") await markReadBefore(libraryId, choice.chapter + 1); // + 1 so the chapter you typed counts too
+    if (choice.kind === "upTo") await setReadUpTo(libraryId, choice.chapter);
     else await setAllRead(libraryId, choice.kind === "all");
     setLibrary(await listNovels());
   }
@@ -133,7 +133,9 @@ function Browse({ onRead, novelId }: BrowseProps) {
   }
 
   async function addToLibrary() {
-    if (!novel) return;
+    // already saved: saving again would line chapters up by number and could put saved text under the wrong chapter
+    // new chapters come in through the update check instead
+    if (!novel || libraryId) return;
     setStatus("Saving…");
     try {
       const id = await saveNovel(source.id, novel);
@@ -200,7 +202,7 @@ function Browse({ onRead, novelId }: BrowseProps) {
           <p>
             {novel.chapters?.length ?? 0} chapters{seriesStatus && ` · ${seriesStatus}`}
           </p>
-          <button onClick={addToLibrary}>{libraryId ? "In your library ✓" : "Add to library"}</button>
+          <button onClick={addToLibrary} disabled={libraryId !== null}>{libraryId ? "In your library ✓" : "Add to library"}</button>
           {libraryId && (
             <div className="download">
               <button onClick={() => onRead(libraryId)}>📖 Read</button>

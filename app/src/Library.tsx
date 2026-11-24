@@ -5,6 +5,7 @@ import { coverLink } from "./library/covers";
 import { continueReading, listTiles, searchTiles, sortTiles, type Sort, type Tile } from "./library/shelf";
 import { lists, toList, type List } from "./library/lists";
 import Dropdown from "./Dropdown";
+import Tick from "./Tick";
 
 type LibraryProps = {
   onReadNovel: (id: number) => void;
@@ -25,9 +26,7 @@ function TileButton({ tile }: { tile: Tile }) {
         {tile.fresh > 0 && <span className="library-new">{tile.fresh} new</span>}
         {tile.finished && (
           <span className="library-done" aria-label="Read">
-            <svg viewBox="0 0 16 16" aria-hidden="true">
-              <path d="M3 8.5 L6.5 12 L13 4.5" />
-            </svg>
+            <Tick />
           </span>
         )}
       </span>

@@ -195,6 +195,13 @@ export async function markReadBefore(novelId: number, number: number) {
   if (result.rowsAffected > 0) await moveIfFinished(novelId);
 }
 
+// "Read up to chapter N" on the novel page: 1 to N read, everything after unread, so a wrong tick gets fixed too
+export async function setReadUpTo(novelId: number, number: number) {
+  const db = await getDb();
+  await db.execute("UPDATE chapters SET read = (number <= $2) WHERE novel_id = $1", [novelId, number]);
+  await moveIfFinished(novelId);
+}
+
 export async function setAllRead(novelId: number, read: boolean) {
   const db = await getDb();
   const result = await db.execute("UPDATE chapters SET read = $1 WHERE novel_id = $2 AND read != $1", [read ? 1 : 0, novelId]);
@@ -292,4 +299,15 @@ export async function saveBookChapters(id: number, chapters: number) {
 export async function saveBookRead(id: number, read: number[]) {
   const db = await getDb();
   await db.execute("UPDATE books SET read = $1 WHERE id = $2", [JSON.stringify(read), id]);
+}
+
+// just the two numbers on the Updates and Notifications tabs, without loading every novel
+export async function countBadges() {
+  const db = await getDb();
+  const rows = await db.select<{ fresh: number; notices: number }[]>(
+    `SELECT
+       (SELECT COUNT(*) FROM chapters WHERE read = 0 AND found_at IS NOT NULL AND cleared = 0) AS fresh,
+       (SELECT COUNT(*) FROM novels WHERE back_from_hiatus = 1) AS notices`,
+  );
+  return rows[0];
 }

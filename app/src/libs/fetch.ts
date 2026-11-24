@@ -5,8 +5,11 @@ import { fetch } from "@tauri-apps/plugin-http";
 const USER_AGENT =
   "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0 Mobile Safari/537.36";
 
+// a site that never answers would leave a download stuck on "Fetching" forever, so give up after 30 seconds
+const TIMEOUT = 30_000;
+
 export async function fetchApi(url: string, init?: RequestInit): Promise<Response> {
   const headers = new Headers(init?.headers);
   if (!headers.has("User-Agent")) headers.set("User-Agent", USER_AGENT);
-  return fetch(url, { ...init, headers });
+  return fetch(url, { ...init, headers, signal: init?.signal ?? AbortSignal.timeout(TIMEOUT) });
 }

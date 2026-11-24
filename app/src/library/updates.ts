@@ -38,7 +38,8 @@ export async function checkForUpdates(onProgress: (check: Check) => void) {
         // the site might say the series has finished since last time
         const status = toStatus(site.status);
         const before = toStatus(novel.status);
-        await saveNovelStatus(novel.id, status);
+        // unknown would overwrite what we knew (like hiatus) and hide the change when the site comes back
+        if (status !== "unknown") await saveNovelStatus(novel.id, status);
         // only when it changes, so a novel you moved back to Reading yourself stays there
         if ((status === "completed" || status === "hiatus") && status !== before) await moveIfFinished(novel.id);
         if (cameOffHiatus(before, status, toList(novel.list))) await setBackFromHiatus(novel.id, true);

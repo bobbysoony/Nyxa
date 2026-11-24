@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Tick from "./Tick";
 
 type AutoDownloadProps = {
   on: boolean;
@@ -21,9 +22,7 @@ function AutoDownload({ on, limit, onDone }: AutoDownloadProps) {
           Download new chapters by themselves
           <span className="tick">
             {isOn && (
-              <svg viewBox="0 0 16 16" aria-hidden="true">
-                <path d="M3 8.5 L6.5 12 L13 4.5" />
-              </svg>
+              <Tick />
             )}
           </span>
         </button>

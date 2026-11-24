@@ -6,7 +6,7 @@ import "../foliate-js/view.js";
 import SettingsPanel from "./SettingsPanel";
 import { makeBookCSS, Settings } from "./settings";
 import { getTitle } from "./getTitle";
-import { tapZone } from "./taps";
+import { tapAction } from "./taps";
 import type { FoliateBook, FoliateView } from "./foliate";
 import { makeNovelBook, type NovelBook } from "./library/novelBook";
 import Contents from "./Contents.tsx";
@@ -59,22 +59,26 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
   const [words, setWords] = useState(0);
   const [picked, setPicked] = useState("");
   const [hiding, setHiding] = useState<{ everywhere: boolean } | null>(null);
+  const barsHiddenRef = useRef(barsHidden);
 
+  useEffect(() => {
+    barsHiddenRef.current = barsHidden;
+  }, [barsHidden]);
 
   function handleKey(e: KeyboardEvent) {
     if (e.key === "ArrowRight") viewRef.current?.goRight();
     if (e.key === "ArrowLeft") viewRef.current?.goLeft();
-    if (e.key === "Escape") setShowSettings(false);
+    if (e.key === "Escape") {setShowSettings(false); setBarsHidden(true);}
   }
 
   function tapAt(x: number) {
     const page = containerRef.current?.getBoundingClientRect();
-    if (!page) return;
-    const zone = tapZone(x - page.left, page.width);
+    if (!page || !viewRef.current) return;
+    const action = tapAction(x - page.left, page.width, !barsHiddenRef.current);
 
-    if (zone === "left") viewRef.current?.goLeft();
-    else if (zone === "right") viewRef.current?.goRight();
-    else if (window.matchMedia("(pointer: coarse)").matches && viewRef.current) { setBarsHidden((hidden) => !hidden); }
+    if (action === "left") viewRef.current.goLeft();
+    else if (action === "right") viewRef.current.goRight();
+    else setBarsHidden(action === "hide bars"); // A tap in the middle shows them. While they're showing, any tap hides them
   }
 
   function handleBookClick(e: MouseEvent, doc: Document) {
@@ -328,7 +332,7 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
 
   return (
     <div className={barsHidden ? "reader bars-hidden" : "reader"}>
-      <div className="reader-bar">
+      <div className="reader-bar reader-top">
         <button onClick={pickBook}>📖 Open book</button>
         <button onClick={() => reopenLastBook(true)}>📚 Last EPUB</button>
         <button onClick={() => setShowContents(true)}>☰ Contents</button>
@@ -387,7 +391,7 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
         />
       )}
 
-      <div className="reader-bar">
+      <div className="reader-bar reader-bottom">
         <button onClick={() => viewRef.current?.prev()}>◀ Back</button>
         <span>
           {place || chapter} {progress}%

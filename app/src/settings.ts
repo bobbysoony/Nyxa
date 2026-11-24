@@ -34,6 +34,11 @@ export const defaultSettings: Settings = {
   novelFilters: []
 };
 
+// Reset puts the look back to normal, but your hidden lines and swapped words stay, you made those by hand
+export function resetLook(settings: Settings): Settings {
+  return { ...defaultSettings, filters: settings.filters, swaps: settings.swaps, novelFilters: settings.novelFilters };
+}
+
 type Theme = {
   background: string;
   text: string;

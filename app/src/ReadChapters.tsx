@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Confirm from "./Confirm";
 
 export type ReadChoice = { kind: "all" } | { kind: "upTo"; chapter: number } | { kind: "none" };
 
@@ -12,6 +13,7 @@ type ReadChaptersProps = {
 function ReadChapters({ total, onPick, onClose }: ReadChaptersProps) {
   const [chapter, setChapter] = useState(1);
   const [pickingChapter, setPickingChapter] = useState(false);
+  const [askingUnread, setAskingUnread] = useState(false);
 
   return (
     <>
@@ -39,8 +41,17 @@ function ReadChapters({ total, onPick, onClose }: ReadChaptersProps) {
             </div>
           )}
         </div>
-        <button onClick={() => onPick({ kind: "none" })}>Mark all unread</button>
+        <button onClick={() => setAskingUnread(true)}>Mark all unread</button>
       </div>
+      {askingUnread && (
+        <Confirm
+          title="Mark all unread"
+          message="Untick every chapter of this novel? You can't undo this."
+          no="Cancel"
+          yes="Untick all"
+          onAnswer={(yes) => (yes ? onPick({ kind: "none" }) : setAskingUnread(false))}
+        />
+      )}
     </>
   );
 }

@@ -10,7 +10,7 @@ import Updates from "./Updates";
 import Notifications from "./Notifications";
 import Fps from "./Fps";
 import { checkForUpdates, type Check } from "./library/updates";
-import { listNovels } from "./library/db";
+import { countBadges } from "./library/db";
 import DownloadBar from "./DownloadBar";
 import { retryFailed, startWaiting } from "./library/download";
 import "./App.css";
@@ -41,14 +41,15 @@ function App() {
 
   // Counted from the database like the covers, so it survives a restart and drops as you read.
   function countFresh() {
-    listNovels().then((novels) => {
-      setFresh(novels.reduce((sum, novel) => sum + novel.fresh, 0));
-      setNotices(novels.filter((novel) => novel.back_from_hiatus === 1).length);
+    countBadges().then((counts) => {
+      setFresh(counts.fresh);
+      setNotices(counts.notices);
     });
   }
 
-  // check?.done too: a series can come off hiatus without any new chapters
-  useEffect(countFresh, [place, check?.found, check?.done === check?.total]);
+  // recount when a check ends too: a series can come off hiatus without any new chapters
+  const checkFinished = check?.done === check?.total;
+  useEffect(countFresh, [place, check?.found, checkFinished]);
 
   useEffect(() => {
     if (!navigator.userAgent.includes("Android")) return; // only phones have a Back button

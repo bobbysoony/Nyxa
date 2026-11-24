@@ -4,19 +4,6 @@ mod chapters;
 use tauri::Manager;
 use tauri_plugin_sql::{Migration, MigrationKind};
 
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! youve been greeted by me now, hahahaha", name)
-}
-
-#[tauri::command]
-fn shout(name: &str) -> String {
-    format!(
-        "Hello, {}! you are getting shouted at!",
-        name.to_uppercase()
-    )
-}
-
 fn migrations() -> Vec<Migration> {
     vec![
         Migration {
@@ -126,8 +113,6 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
-            greet,
-            shout,
             chapters::save_chapter_text,
             chapters::load_chapter_text
         ])

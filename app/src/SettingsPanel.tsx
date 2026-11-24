@@ -1,8 +1,9 @@
-import { defaultSettings, Settings } from "./settings";
+import { resetLook, Settings, themes } from "./settings";
 import { useEffect, useState } from "react";
 import { getVersion } from "@tauri-apps/api/app";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import Dropdown from "./Dropdown";
+import Tick from "./Tick";
 
 const feedbackForm = "https://docs.google.com/forms/d/e/1FAIpQLSeja2ymZtDo_tCi4P2g4_c4NjahdpdU1B3YhD85WibXniqqzg/viewform?usp=pp_url&entry.1358451065=";
 
@@ -28,30 +29,11 @@ function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
   return (
     <div className="settings-panel">
       <div className="theme-buttons">
-        <button
-          disabled={settings.theme === "night"}
-          onClick={() => onChange({ ...settings, theme: "night" })}
-        >
-          Night
-        </button>
-        <button
-          disabled={settings.theme === "sepia"}
-          onClick={() => onChange({ ...settings, theme: "sepia" })}
-        >
-          Sepia
-        </button>
-        <button
-          disabled={settings.theme === "light"}
-          onClick={() => onChange({ ...settings, theme: "light" })}
-        >
-          Light
-        </button>
-        <button
-          disabled={settings.theme === "contrast"}
-          onClick={() => onChange({ ...settings, theme: "contrast" })}
-        >
-          Contrast
-        </button>
+        {Object.keys(themes).map((name) => (
+          <button key={name} disabled={settings.theme === name} onClick={() => onChange({ ...settings, theme: name })}>
+            {name[0].toUpperCase() + name.slice(1)}
+          </button>
+        ))}
       </div>
 
       <button
@@ -64,9 +46,7 @@ function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
         Scroll
         <span className="tick">
           {scrolled && (
-            <svg viewBox="0 0 16 16" aria-hidden="true">
-              <path d="M3 8.5 L6.5 12 L13 4.5" />
-            </svg>
+            <Tick />
           )}
         </span>
       </button>
@@ -81,9 +61,7 @@ function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
         Show time left
         <span className="tick">
           {settings.showTimeLeft && (
-            <svg viewBox="0 0 16 16" aria-hidden="true">
-              <path d="M3 8.5 L6.5 12 L13 4.5" />
-            </svg>
+            <Tick />
           )}
         </span>
       </button>
@@ -198,7 +176,7 @@ function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
         </>
       )}
 
-      <button onClick={() => onChange(defaultSettings)}>Reset to default</button>
+      <button onClick={() => onChange(resetLook(settings))}>Reset to default</button>
 
       <div className="about">
         <span>Nyxa {version}</span>

@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { defaultSettings, getTheme, makeBookCSS, themes } from "./settings";
+import { defaultSettings, getTheme, makeBookCSS, resetLook, themes } from "./settings";
 
 // Themes
 
@@ -35,4 +35,21 @@ test("makeBookCSS uses the chosen font", () => {
 test("makeBookCSS uses the chosen line height", () => {
   const css = makeBookCSS({ ...defaultSettings, lineHeight: 2.1 });
   expect(css).toContain("line-height: 2.1");
+});
+
+test("reset puts the look back but keeps your hidden lines and swaps", () => {
+  const mine = {
+    ...defaultSettings,
+    fontSize: 30,
+    theme: "sepia",
+    filters: ["join our discord"],
+    swaps: [{ find: "colour", replace: "color" }],
+    novelFilters: [{ find: "ads", novelId: 1 }],
+  };
+  const reset = resetLook(mine);
+  expect(reset.fontSize).toBe(defaultSettings.fontSize);
+  expect(reset.theme).toBe(defaultSettings.theme);
+  expect(reset.filters).toEqual(mine.filters);
+  expect(reset.swaps).toEqual(mine.swaps);
+  expect(reset.novelFilters).toEqual(mine.novelFilters);
 });

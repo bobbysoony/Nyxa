@@ -3,7 +3,7 @@ import { load } from "@tauri-apps/plugin-store";
 import { makeBook } from "../../foliate-js/view.js";
 import type { FoliateBook } from "../foliate";
 import { getTitle } from "../getTitle";
-import { bookKey, type Bytes } from "./bookKey";
+import { bookKey, fingerprint, type Bytes } from "./bookKey";
 import { sources } from "../sources";
 import { downloadCover, saveCover } from "./covers";
 import { sleep } from "./download";
@@ -24,8 +24,15 @@ export function tocHrefs(book: FoliateBook) {
 // Adds an EPUB to the library, or finds it if it's already there,
 // so opening the same book again keeps its place and its ticks.
 export async function addBook(bytes: Bytes) {
-  const { key, title } = await readBook(bytes);
-  const old = await getBookByKey(key);
+  const book = await readBook(bytes);
+  const title = book.title;
+  let key = book.key;
+  let old = await getBookByKey(key);
+  // some badly made EPUBs share an ID with a totally different book, so if the title doesn't match go by the file's fingerprint
+  if (old && old.title !== title) {
+    key = `sha256:${await fingerprint(bytes)}`;
+    old = await getBookByKey(key);
+  }
   const file = old?.file ?? `books/${Date.now()}.epub`;
   await mkdir("books", { ...appData, recursive: true });
   await writeFile(file, bytes, appData);

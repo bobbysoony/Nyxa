@@ -7,3 +7,9 @@ export function tapZone(x: number, width: number): TapZone {
   if (x > width * 0.7) return "right";
   return "middle";
 }
+
+// What a tap does. While the bars are showing, any tap just hides them, so you never turn a page by accident
+export function tapAction(x: number, width: number, barsShown: boolean): TapZone | "hide bars" {
+  if (barsShown) return "hide bars";
+  return tapZone(x, width);
+}
