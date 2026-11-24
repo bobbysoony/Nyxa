@@ -1,0 +1,1 @@
+ALTER TABLE novels ADD COLUMN status TEXT NOT NULL DEFAULT 'unknown';

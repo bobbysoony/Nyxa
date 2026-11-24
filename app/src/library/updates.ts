@@ -1,6 +1,8 @@
 import { sources } from "../sources";
 import type { ChapterItem } from "../sources/types";
-import { getChapters, listNovels, saveChapterList } from "./db";
+import { getChapters, listNovels, moveIfFinished, saveChapterList, saveNovelStatus, setBackFromHiatus } from "./db";
+import { cameOffHiatus, toStatus } from "./status";
+import { toList } from "./lists";
 import { queueChapters, sleep } from "./download";
 
 // The chapters on the site that Nyxa doesn't have yet, in the site's order.
@@ -33,6 +35,13 @@ export async function checkForUpdates(onProgress: (check: Check) => void) {
         // New chapters go after the last one Nyxa has.
         await saveChapterList(novel.id, found, chapters.length + 1, Date.now());
         check.found += found.length;
+        // the site might say the series has finished since last time
+        const status = toStatus(site.status);
+        const before = toStatus(novel.status);
+        await saveNovelStatus(novel.id, status);
+        // only when it changes, so a novel you moved back to Reading yourself stays there
+        if ((status === "completed" || status === "hiatus") && status !== before) await moveIfFinished(novel.id);
+        if (cameOffHiatus(before, status, toList(novel.list))) await setBackFromHiatus(novel.id, true);
         // auto_limit is the cap: a novel you haven't opened for months could have hundreds waiting.
         if (novel.auto_download && found.length > 0) await queueChapters(novel.id, novel.auto_limit, true);
       } catch (err) {

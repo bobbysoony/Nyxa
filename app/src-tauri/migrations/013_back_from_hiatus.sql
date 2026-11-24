@@ -1,0 +1,1 @@
+ALTER TABLE novels ADD COLUMN back_from_hiatus INTEGER NOT NULL DEFAULT 0;

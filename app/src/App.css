@@ -498,6 +498,21 @@ body {
   opacity: 1;
 }
 
+/* a div, not a button like the update rows, so it draws its own box */
+.notification {
+  gap: 10px;
+  padding: 0.6em 1.2em;
+  border: 1px solid var(--text);
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.notification-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .updates-novel {
   font-size: 0.8em;
   font-weight: bold;
@@ -559,6 +574,43 @@ body {
   padding: 0;
   background: none;
   box-shadow: none;
+}
+
+.read-chapters {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* one box around the "Read up to chapter" button and the row it opens */
+.read-up-to-group {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--text);
+  border-radius: 8px;
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
+}
+
+.read-up-to-group > button {
+  border: none;
+  box-shadow: none;
+  background: none;
+}
+
+.read-up-to {
+  display: flex;
+  gap: 8px;
+  padding: 0 10px 10px;
+}
+
+.read-up-to input {
+  flex: 1;
+  min-width: 0;
+  appearance: textfield; /* no up/down arrows, you type the number */
+}
+
+.read-up-to input::-webkit-inner-spin-button {
+  display: none;
 }
 
 /* Above everything (dialogs top out at 20), and clicks pass through it. */

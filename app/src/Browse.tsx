@@ -2,8 +2,19 @@ import { useState, useEffect } from "react";
 import { sources } from "./sources";
 import type { NovelItem, SourceNovel } from "./sources/types";
 import { queueChapters } from "./library/download";
-import { getChapters, listNovels, saveAutoDownload, saveNovel, saveNovelList, setAllRead, type LibraryRow } from "./library/db";
+import {
+  getChapters,
+  listNovels,
+  markReadBefore,
+  saveAutoDownload,
+  saveNovel,
+  saveNovelList,
+  setAllRead,
+  type LibraryRow,
+} from "./library/db";
+import ReadChapters, { type ReadChoice } from "./ReadChapters";
 import { lists, toList, type List } from "./library/lists";
+import { statusLabel, toStatus } from "./library/status";
 import Dropdown from "./Dropdown";
 import { downloadCover } from "./library/covers";
 import AutoDownload from "./AutoDownload";
@@ -24,6 +35,7 @@ function Browse({ onRead, novelId }: BrowseProps) {
   const [library, setLibrary] = useState<LibraryRow[]>([]);
   const [libraryId, setLibraryId] = useState<number | null>(null);
   const [showAuto, setShowAuto] = useState(false);
+  const [showRead, setShowRead] = useState(false);
 
   useEffect(() => {
     listNovels().then((rows) => {
@@ -76,6 +88,7 @@ function Browse({ onRead, novelId }: BrowseProps) {
         path: saved.path,
         author: saved.author ?? undefined,
         summary: saved.summary ?? undefined,
+        status: saved.status,
         chapters: chapters.map((chapter) => ({ name: chapter.name, path: chapter.path })),
       });
       setStatus("Couldn't reach the site, so this is what Nyxa has saved.");
@@ -94,10 +107,13 @@ function Browse({ onRead, novelId }: BrowseProps) {
 
   const libraryRow = library.find((row) => row.id === libraryId);
   const allRead = libraryRow?.unread === 0;
+  const seriesStatus = statusLabel(toStatus(novel?.status));
 
-  async function readItAll() {
+  async function markRead(choice: ReadChoice) {
+    setShowRead(false);
     if (!libraryId) return;
-    await setAllRead(libraryId, !allRead);
+    if (choice.kind === "upTo") await markReadBefore(libraryId, choice.chapter + 1); // + 1 so the chapter you typed counts too
+    else await setAllRead(libraryId, choice.kind === "all");
     setLibrary(await listNovels());
   }
 
@@ -181,21 +197,17 @@ function Browse({ onRead, novelId }: BrowseProps) {
           </h2>
           <p className="novel-author">{novel.author}</p>
           <p className="novel-summary">{novel.summary}</p>
-          <p>{novel.chapters?.length ?? 0} chapters</p>
+          <p>
+            {novel.chapters?.length ?? 0} chapters{seriesStatus && ` · ${seriesStatus}`}
+          </p>
           <button onClick={addToLibrary}>{libraryId ? "In your library ✓" : "Add to library"}</button>
           {libraryId && (
             <div className="download">
               <button onClick={() => onRead(libraryId)}>📖 Read</button>
-              <button className="toggle" aria-pressed={allRead} onClick={readItAll}>
-                Read it all
-                <span className="tick">
-                  {allRead && (
-                    <svg viewBox="0 0 16 16" aria-hidden="true">
-                      <path d="M3 8.5 L6.5 12 L13 4.5" />
-                    </svg>
-                  )}
-                </span>
-              </button>
+              <button onClick={() => setShowRead(true)}>✓ Mark read…</button>
+              {showRead && libraryRow && (
+                <ReadChapters total={libraryRow.total} onPick={markRead} onClose={() => setShowRead(false)} />
+              )}
               {libraryRow && (
                 <Dropdown
                   label="List"

@@ -85,6 +85,18 @@ fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/011_list.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 12,
+            description: "series status",
+            sql: include_str!("../migrations/012_status.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 13,
+            description: "back from hiatus",
+            sql: include_str!("../migrations/013_back_from_hiatus.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 

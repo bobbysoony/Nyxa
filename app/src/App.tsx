@@ -5,8 +5,9 @@ import Reader from "./Reader";
 import Browse from "./Browse";
 import Library from "./Library";
 import { defaultSettings, Settings, getTheme } from "./settings";
-import { Place, browse, goBack, goTo, library, reader, updates } from "./places";
+import { Place, browse, goBack, goTo, library, notifications, reader, updates } from "./places";
 import Updates from "./Updates";
+import Notifications from "./Notifications";
 import Fps from "./Fps";
 import { checkForUpdates, type Check } from "./library/updates";
 import { listNovels } from "./library/db";
@@ -20,6 +21,7 @@ function App() {
   const place = places[places.length - 1];
   const [check, setCheck] = useState<Check | null>(null);
   const [fresh, setFresh] = useState(0);
+  const [notices, setNotices] = useState(0);
   const latestPlaces = useRef(places); // lets the once-only Back listeners see the current pile
 
   useEffect(() => {
@@ -39,10 +41,14 @@ function App() {
 
   // Counted from the database like the covers, so it survives a restart and drops as you read.
   function countFresh() {
-    listNovels().then((novels) => setFresh(novels.reduce((sum, novel) => sum + novel.fresh, 0)));
+    listNovels().then((novels) => {
+      setFresh(novels.reduce((sum, novel) => sum + novel.fresh, 0));
+      setNotices(novels.filter((novel) => novel.back_from_hiatus === 1).length);
+    });
   }
 
-  useEffect(countFresh, [place, check?.found]);
+  // check?.done too: a series can come off hiatus without any new chapters
+  useEffect(countFresh, [place, check?.found, check?.done === check?.total]);
 
   useEffect(() => {
     if (!navigator.userAgent.includes("Android")) return; // only phones have a Back button
@@ -123,6 +129,9 @@ function App() {
         <button className={place.screen === "updates" ? "active" : ""} onClick={() => go(updates)}>
           Updates{fresh ? ` (${fresh})` : ""}
         </button>
+        <button className={place.screen === "notifications" ? "active" : ""} onClick={() => go(notifications)}>
+          Notifications{notices ? ` (${notices})` : ""}
+        </button>
       </nav>
       <DownloadBar />
       {import.meta.env.DEV && <Fps />}
@@ -141,6 +150,7 @@ function App() {
       {place.screen === "updates" && (
         <Updates check={check} onCheck={() => checkForUpdates(setCheck)} onRead={readNovel} onClear={countFresh} />
       )}
+      {place.screen === "notifications" && <Notifications onAnswer={countFresh} />}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import Database from "@tauri-apps/plugin-sql";
 import type { ChapterItem, SourceNovel } from "../sources/types";
-import type { List } from "./lists";
+import { toList, type List } from "./lists";
+import { shouldComplete, shouldPause, toStatus, type Status } from "./status";
 
 export type NovelRow = {
   id: number;
@@ -15,6 +16,8 @@ export type NovelRow = {
   auto_limit: number;
   opened_at: number | null;
   list: string;
+  status: string;
+  back_from_hiatus: number; // 1 = waiting in Notifications for you to pick a list
 };
 
 export type ChapterRow = {
@@ -39,11 +42,11 @@ export async function getDb() {
 export async function saveNovel(source: string, novel: SourceNovel) {
   const db = await getDb();
   await db.execute(
-    `INSERT INTO novels (source, path, name, author, summary)
-     VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO novels (source, path, name, author, summary, status)
+     VALUES ($1, $2, $3, $4, $5, $6)
      ON CONFLICT (source, path) DO UPDATE
-     SET name = excluded.name, author = excluded.author, summary = excluded.summary`,
-    [source, novel.path, novel.name, novel.author ?? null, novel.summary ?? null],
+     SET name = excluded.name, author = excluded.author, summary = excluded.summary, status = excluded.status`,
+    [source, novel.path, novel.name, novel.author ?? null, novel.summary ?? null, toStatus(novel.status)],
   );
 
   const rows = await db.select<{ id: number }[]>(
@@ -175,23 +178,59 @@ export async function saveNovelList(novelId: number, list: List) {
 
 export async function setChapterRead(novelId: number, number: number, read: boolean) {
   const db = await getDb();
-  await db.execute(
-    "UPDATE chapters SET read = $1 WHERE novel_id = $2 AND number = $3",
+  // read != $1 only touches chapters that actually change, so rowsAffected tells us if any were newly read
+  const result = await db.execute(
+    "UPDATE chapters SET read = $1 WHERE novel_id = $2 AND number = $3 AND read != $1",
     [read ? 1 : 0, novelId, number],
   );
+  if (read && result.rowsAffected > 0) await moveIfFinished(novelId);
 }
 
 export async function markReadBefore(novelId: number, number: number) {
   const db = await getDb();
-  await db.execute(
-    "UPDATE chapters SET read = 1 WHERE novel_id = $1 AND number < $2",
+  const result = await db.execute(
+    "UPDATE chapters SET read = 1 WHERE novel_id = $1 AND number < $2 AND read = 0",
     [novelId, number],
   );
+  if (result.rowsAffected > 0) await moveIfFinished(novelId);
 }
 
 export async function setAllRead(novelId: number, read: boolean) {
   const db = await getDb();
-  await db.execute("UPDATE chapters SET read = $1 WHERE novel_id = $2", [read ? 1 : 0, novelId]);
+  const result = await db.execute("UPDATE chapters SET read = $1 WHERE novel_id = $2 AND read != $1", [read ? 1 : 0, novelId]);
+  if (read && result.rowsAffected > 0) await moveIfFinished(novelId);
+}
+
+// saves what the site says right now, the update check calls this
+export async function saveNovelStatus(novelId: number, status: Status) {
+  const db = await getDb();
+  await db.execute("UPDATE novels SET status = $1 WHERE id = $2", [status, novelId]);
+}
+
+// moves a caught-up novel to Completed (series finished) or On hold (series on hiatus)
+// only runs right after a chapter gets marked read, or when a series turns finished or goes on hiatus
+// so if you move a finished novel back to Reading yourself, rereading old chapters won't throw it back
+export async function moveIfFinished(novelId: number) {
+  const db = await getDb();
+  const rows = await db.select<{ list: string; status: string; total: number; unread: number }[]>(
+    `SELECT list, status,
+       (SELECT COUNT(*) FROM chapters WHERE chapters.novel_id = novels.id) AS total,
+       (SELECT COUNT(*) FROM chapters WHERE chapters.novel_id = novels.id AND chapters.read = 0) AS unread
+     FROM novels WHERE id = $1`,
+    [novelId],
+  );
+  const row = rows[0];
+  if (!row) return;
+  const list = toList(row.list);
+  const status = toStatus(row.status);
+  if (shouldComplete(list, status, row.unread, row.total)) await saveNovelList(novelId, "completed");
+  else if (shouldPause(list, status, row.unread, row.total)) await saveNovelList(novelId, "paused");
+}
+
+// the update check sets it, picking a list in Notifications clears it
+export async function setBackFromHiatus(novelId: number, on: boolean) {
+  const db = await getDb();
+  await db.execute("UPDATE novels SET back_from_hiatus = $1 WHERE id = $2", [on ? 1 : 0, novelId]);
 }
 
 export type BookRow = {
