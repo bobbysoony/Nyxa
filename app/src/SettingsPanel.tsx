@@ -104,6 +104,19 @@ function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
         />
       </label>
       <label>
+        Paragraph gap: {settings.paragraphGap}
+        <input
+          type="range"
+          min="0"
+          max="2"
+          step="0.1"
+          value={settings.paragraphGap}
+          onChange={(e) =>
+            onChange({ ...settings, paragraphGap: Number(e.target.value) })
+          }
+        />
+      </label>
+      <label>
         Reading speed: {settings.wordsPerMinute} words a minute
         <input
           type="range"

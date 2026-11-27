@@ -25,12 +25,31 @@ export function tidy(text: string) {
   return text.replace(/\s+/g, " ").trim();
 }
 
+// Straight quotes turned into the curly ones a printed book uses. Curly ones are already right, so they're left alone.
+// A quote at the start, or after a space, bracket or dash, opens. Anywhere else it closes,
+// so the ' in don't and in James' becomes a closing one, which is the right mark for those too.
+// before is the character just in front of the text, for text that carries on after a tag like <em>
+export function curlyQuotes(text: string, before = "") {
+  // 'em and '90s are cut-off words, not quotes, so they always get the closing one even after a space
+  text = text.replace(/'(?=em\b|\d)/g, "’");
+  let out = "";
+  for (const char of text) {
+    const opens = before === "" || /[\s([{“‘—–-]/.test(before);
+    if (char === '"') before = opens ? "“" : "”";
+    else if (char === "'") before = opens ? "‘" : "’";
+    else before = char;
+    out += before;
+  }
+  return out;
+}
+
 // `myFilters` are the reader's own phrases from Settings: plain text, not regular expressions.
+// Chapters have curly quotes now, so a phrase saved with straight ones is checked both ways
 export function matchesMyFilter(line: string, myFilters: string[]) {
   const lower = line.toLowerCase();
   return myFilters.some((filter) => {
     const phrase = tidy(filter).toLowerCase();
-    return phrase !== "" && lower.includes(phrase);
+    return phrase !== "" && (lower.includes(phrase) || lower.includes(curlyQuotes(phrase)));
   });
 }
 
@@ -40,9 +59,13 @@ export function isJunk(line: string) {
 }
 
 // cut the text at every find, then glue the pieces back with the new words. An empty find would cut between every letter, so skip those
+// A swap made before chapters had curly quotes still has straight ones, so it's tried with curly ones too
 export function swapText(text: string, swaps: Swap[]) {
   for (const swap of swaps) {
-    if (swap.find !== "") text = text.split(swap.find).join(swap.replace);
+    if (swap.find === "") continue;
+    text = text.split(swap.find).join(swap.replace);
+    const curly = curlyQuotes(swap.find);
+    if (curly !== swap.find) text = text.split(curly).join(swap.replace);
   }
   return text;
 }
@@ -61,6 +84,25 @@ export function applySwaps(doc: Document, swaps: Swap[]) {
       const swapped = swapText(original, swaps);
       if (node.data !== swapped) node.data = swapped;
     }
+  }
+}
+
+// Curly quotes on a page that's showing, web novel or EPUB. Only the words change, never a tag or a link,
+// and every quote stays one character, so saved places in an EPUB still point at the same spot
+export function curlyPage(doc: Document) {
+  const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
+  let block: Element | null = null;
+  let before = "";
+  for (let node = walker.nextNode() as Text | null; node; node = walker.nextNode() as Text | null) {
+    const parent = node.parentElement;
+    if (!parent || parent.closest("code, pre, script, style")) continue; // code keeps its straight quotes
+    // a new paragraph starts fresh, so its first quote opens
+    const here = parent.closest("p, div, li, blockquote, td, h1, h2, h3, h4, h5, h6");
+    if (here !== block) before = "";
+    block = here;
+    const curly = curlyQuotes(node.data, before);
+    if (curly !== node.data) node.data = curly;
+    before = curly.slice(-1) || before;
   }
 }
 

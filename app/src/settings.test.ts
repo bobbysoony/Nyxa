@@ -37,6 +37,11 @@ test("makeBookCSS uses the chosen line height", () => {
   expect(css).toContain("line-height: 2.1");
 });
 
+test("makeBookCSS gives every paragraph the chosen gap", () => {
+  const css = makeBookCSS({ ...defaultSettings, paragraphGap: 0.6 });
+  expect(css).toContain("margin: 0 0 0.6em");
+});
+
 test("reset puts the look back but keeps your hidden lines and swaps", () => {
   const mine = {
     ...defaultSettings,

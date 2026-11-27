@@ -3,6 +3,7 @@ export type Settings = {
   font: string;
   fontSize: number;
   lineHeight: number;
+  paragraphGap: number;
   margin: number;
   theme: string;
   readingMode: string;
@@ -24,6 +25,7 @@ export const defaultSettings: Settings = {
   font: "Georgia, serif",
   fontSize: 18,
   lineHeight: 1.5,
+  paragraphGap: 1,
   margin: 7,
   theme: "night",
   readingMode: "paginated",
@@ -78,6 +80,10 @@ export function makeBookCSS(settings: Settings) {
     }
     .credits {
       opacity: 0.6;
+    }
+      /* The same gap after every paragraph, whatever the site or the book's maker did */
+    body p {
+      margin: 0 0 ${settings.paragraphGap}em !important;
     }
   `;
 }

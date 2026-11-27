@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { cleanChapter, isCredit, isJunk, matchesMyFilter, swapText, tidy } from "./clean";
+import { cleanChapter, curlyQuotes, isCredit, isJunk, matchesMyFilter, swapText, tidy } from "./clean";
 
 test("tidy squeezes spaces and trims the ends", () => {
   expect(tidy("  Hello \n   world\u00a0 ")).toBe("Hello world");
@@ -104,4 +104,46 @@ test("a swap minds capitals", () => {
 
 test("a swap with an empty find does nothing", () => {
   expect(swapText("Hello", [{ find: "", replace: "X" }])).toBe("Hello");
+});
+
+test("straight quotes turn curly, opening and closing", () => {
+  expect(curlyQuotes('"Run," she said. "Now!"')).toBe("“Run,” she said. “Now!”");
+  expect(curlyQuotes("He said 'no' twice.")).toBe("He said ‘no’ twice.");
+});
+
+test("apostrophes become closing quotes", () => {
+  expect(curlyQuotes("don't, Sunny's, James' sword")).toBe("don’t, Sunny’s, James’ sword");
+});
+
+test("a quote after a dash or a bracket opens", () => {
+  expect(curlyQuotes('He shouted—"Wait!" ("Why?")')).toBe("He shouted—“Wait!” (“Why?”)");
+});
+
+test("a quote inside a quote", () => {
+  expect(curlyQuotes(`"She said 'hi' to me."`)).toBe("“She said ‘hi’ to me.”");
+});
+
+test("curly quotes that are already there stay as they are", () => {
+  expect(curlyQuotes("“Hi,” she said. Don’t.")).toBe("“Hi,” she said. Don’t.");
+});
+
+test("text after a tag knows the character before it", () => {
+  // "<em>Run</em>" is three bits of text: the quote, Run, and the closing quote after Run
+  expect(curlyQuotes('" he said', "n")).toBe("” he said");
+  expect(curlyQuotes('"Run', " ")).toBe("“Run");
+});
+
+test("a swap or filter saved with straight quotes still works on curly text", () => {
+  expect(swapText("Sunny’s shadow", [{ find: "Sunny's", replace: "Sunless's" }])).toBe("Sunless's shadow");
+  expect(matchesMyFilter("“Translated by moon”", ['"translated by'])).toBe(true);
+});
+
+test("a swap whose new words contain the old ones still runs once", () => {
+  expect(swapText("a cat", [{ find: "cat", replace: "cats" }])).toBe("a cats");
+});
+
+test("an apostrophe that starts a word after a space still curls the right way", () => {
+  expect(curlyQuotes("Get 'em")).toBe("Get ’em");
+  expect(curlyQuotes("the '90s")).toBe("the ’90s");
+  expect(curlyQuotes("'Emma'")).toBe("‘Emma’");
 });

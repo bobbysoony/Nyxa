@@ -22,7 +22,7 @@ import { loadBook, tocHrefs } from "./library/books";
 import { chapterFromHref, paragraphAt, positionHref } from "./library/position";
 import { finishedChapter } from "./library/finished";
 import { timeLeft, wordsLeft } from "./library/timeleft";
-import { applySwaps, hideMyFilters, tidy } from "./library/clean";
+import { applySwaps, curlyPage, hideMyFilters, tidy } from "./library/clean";
 import FixBar from "./FixBar";
 import Confirm from "./Confirm";
 import Icon from "./Icon";
@@ -308,6 +308,7 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
 
     view.addEventListener("load", (e) => {
       const doc = e.detail.doc;
+      curlyPage(doc);
       applyMyFixes(doc);
       doc.addEventListener("keydown", handleKey);
       doc.addEventListener("click", (ev) => handleBookClick(ev, doc));
