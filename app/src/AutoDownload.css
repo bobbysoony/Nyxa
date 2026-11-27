@@ -1,0 +1,17 @@
+.auto-download {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auto-download label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auto-download input {
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}

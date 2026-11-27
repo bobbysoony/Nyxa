@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { clearFinished, retryFailed, stopDownloads, watchDownloads, type Downloads } from "./library/download";
+import "./DownloadBar.css";
 
 // A thin bar under the tabs, on every screen, while chapters download.
 function DownloadBar() {

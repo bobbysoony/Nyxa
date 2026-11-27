@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Confirm from "./Confirm";
+import "./ReadChapters.css";
 
 export type ReadChoice = { kind: "all" } | { kind: "upTo"; chapter: number } | { kind: "none" };
 

@@ -1,0 +1,13 @@
+/* Above everything (dialogs top out at 20), and clicks pass through it. */
+.fps {
+  position: fixed;
+  top: 4px;
+  right: 4px;
+  z-index: 100;
+  padding: 2px 6px;
+  font-size: 0.75em;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border-radius: 4px;
+  pointer-events: none;
+}

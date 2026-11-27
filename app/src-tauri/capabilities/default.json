@@ -14,6 +14,12 @@
     "store:default",
     "fs:allow-appdata-write-recursive",
     "sql:default",
-    "sql:allow-execute"
+    "sql:allow-execute",
+    "oauth:allow-start",
+    "oauth:allow-cancel",
+    {
+      "identifier": "http:default",
+      "allow": [{ "url": "https://oauth2.googleapis.com/*" }, { "url": "https://www.googleapis.com/*" }]
+    }
   ]
 }

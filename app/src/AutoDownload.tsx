@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Tick from "./Tick";
+import "./AutoDownload.css";
 
 type AutoDownloadProps = {
   on: boolean;

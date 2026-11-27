@@ -1,0 +1,132 @@
+.reader {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: relative;
+}
+
+.reader-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  height: 44px;
+  /* Shorter than the page's 48px top and bottom margins, so it never covers words */
+  box-sizing: border-box;
+  padding: 4px 8px;
+  position: absolute;
+  /* It floats over the page, so the page never changes size */
+  left: 0;
+  right: 0;
+  z-index: 5;
+  background: var(--page);
+}
+
+.reader-top {
+  top: 0;
+  z-index: 6;
+  /* Three columns: icons on the left, the title in the middle, Aa on the right.
+     The two sides are the same width, so the title stays in the centre */
+  display: grid;
+  grid-template-columns: 1fr minmax(0, max-content) 1fr;
+}
+
+.reader-bar-side {
+  display: flex;
+  gap: 4px;
+}
+
+.reader-bar-right {
+  justify-content: flex-end;
+}
+
+.reader-title {
+  font-size: 0.85em;
+  opacity: 0.8;
+  text-align: center;
+}
+
+/* The welcome note floats just under the top bar and fades away, taps go straight through it */
+.reader-note {
+  position: absolute;
+  top: 52px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--page);
+  border: 1px solid var(--text);
+  font-size: 0.85em;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .reader-note {
+    animation: note-fade 3s forwards;
+  }
+}
+
+@keyframes note-fade {
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.reader-bottom {
+  bottom: 0;
+}
+
+.reader-page {
+  flex: 1;
+  min-height: 0;
+}
+
+.reader-page foliate-view {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Hidden bars turn see-through and let taps go through to the page, so nothing moves */
+.reader.bars-hidden .reader-bar {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* With a mouse, a hidden bar shows again while the mouse is over it at the top or bottom edge */
+@media (hover: hover) {
+  .reader.bars-hidden .reader-bar {
+    pointer-events: auto;
+  }
+
+  .reader.bars-hidden .reader-bar:hover {
+    opacity: 1;
+  }
+}
+
+/* A quick fade, unless your device is set to reduce motion */
+@media (prefers-reduced-motion: no-preference) {
+  .reader-bar {
+    transition: opacity 0.2s;
+  }
+}
+
+.reader-bar span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reader-bar button {
+  white-space: nowrap;
+}
+
+.reader-time-left {
+  opacity: 0.7;
+}

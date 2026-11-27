@@ -23,10 +23,12 @@ import { chapterFromHref, paragraphAt, positionHref } from "./library/position";
 import { finishedChapter } from "./library/finished";
 import { timeLeft, wordsLeft } from "./library/timeleft";
 import { applySwaps, curlyPage, hideMyFilters, tidy } from "./library/clean";
+import { chapterName } from "./library/chapterName";
 import FixBar from "./FixBar";
 import Confirm from "./Confirm";
 import Icon from "./Icon";
 import Placeholder from "./Placeholder";
+import "./Reader.css";
 
 type ReaderProps = {
   settings: Settings;
@@ -57,10 +59,10 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
   const [words, setWords] = useState(0);
   const [picked, setPicked] = useState("");
   const [hiding, setHiding] = useState<{ everywhere: boolean } | null>(null);
+  const [loading, setLoading] = useState(false);
   // the book's click listener is made once when a chapter loads, so reading barsHidden there would be stuck on the old value
   // the ref always has the newest one
   const barsHiddenRef = useRef(barsHidden);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     barsHiddenRef.current = barsHidden;
@@ -325,6 +327,9 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
       // and taking a swap away puts back the curly version, not the straight one
       curlyPage(doc);
       applyMyFixes(doc);
+      // some EPUBs only put the chapter name in Contents, so show it at the top. An attribute, not a new tag,
+      // so saved places that count the page's tags still point at the same spot
+      if (!doc.body.querySelector("h1, h2, h3, h4, h5, h6")) doc.body.dataset.title = chapterName(view.book, e.detail.index);
       doc.addEventListener("keydown", handleKey);
       doc.addEventListener("click", (ev) => handleBookClick(ev, doc));
       doc.addEventListener("selectionchange", () => {
@@ -386,7 +391,7 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
 
       <div className="reader-page" ref={containerRef} onClick={(e) => tapAt(e.clientX)}></div>
       <Placeholder settings={settings} shown={loading || error !== ""} message={error} />
-      
+
       {showContents && (
         <Contents
           toc={viewRef.current?.book.toc ?? []}

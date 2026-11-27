@@ -18,6 +18,7 @@
     "sync:get": "node scripts/sync.mjs get"
   },
   "dependencies": {
+    "@fabianlars/tauri-plugin-oauth": "^2.1.0",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-dialog": "^2.8.3",
     "@tauri-apps/plugin-fs": "^2.7.1",

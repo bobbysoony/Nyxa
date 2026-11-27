@@ -78,6 +78,14 @@ export function makeBookCSS(settings: Settings) {
     body *:not(h1, h2, h3, h4, h5, h6) {
       font-size: inherit !important;
     }
+    /* the chapter name the reader adds when the page has none, see Reader.tsx */
+    body[data-title]:not([data-title=""])::before {
+      content: attr(data-title);
+      display: block;
+      font-size: 1.3em;
+      font-weight: bold;
+      margin-bottom: 1em;
+    }
     .credits {
       opacity: 0.6;
     }

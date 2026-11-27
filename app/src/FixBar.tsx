@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Dropdown from "./Dropdown";
+import "./FixBar.css";
 
 type FixBarProps = {
   text: string;

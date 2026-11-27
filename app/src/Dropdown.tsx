@@ -1,4 +1,5 @@
 import { useState } from "react";
+import "./Dropdown.css";
 
 type DropdownProps = {
   label: string; // what the choice is for, like "Sort by". Screen readers read it out

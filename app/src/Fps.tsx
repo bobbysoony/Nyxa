@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import "./Fps.css";
 
 // Counts frames the whole window draws. Every screen lives in this one window,
 // so this one number covers the Reader, Library and the rest.

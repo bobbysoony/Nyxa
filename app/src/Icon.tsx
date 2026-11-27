@@ -1,3 +1,4 @@
+import "./Icon.css";
 // The reader's icons, all drawn the same way: thin lines with round ends on a 24 by 24 grid
 // Drawn by hand, so there's no icon package to install
 const paths = {
@@ -6,6 +7,7 @@ const paths = {
   text: "M3 19 8.5 5 14 19 M5.2 14h6.6 M21 13v6 M21 16a3 3 0 1 1-6 0a3 3 0 1 1 6 0",
   back: "M15 5l-7 7 7 7",
   next: "M9 5l7 7-7 7",
+  account: "M12 4a4 4 0 1 0 0 8a4 4 0 1 0 0-8 M5 20v-1a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v1",
 };
 
 export type IconName = keyof typeof paths;

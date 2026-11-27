@@ -18,6 +18,7 @@ import { statusLabel, toStatus } from "./library/status";
 import Dropdown from "./Dropdown";
 import { downloadCover } from "./library/covers";
 import AutoDownload from "./AutoDownload";
+import "./Browse.css";
 
 const source = sources[0];
 

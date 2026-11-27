@@ -1,0 +1,41 @@
+.theme-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.theme-buttons button:disabled {
+  outline: 2px solid var(--text);
+}
+
+.about {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--text);
+  font-size: 0.9em;
+}
+
+.swap-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+/* the hidden & replaced words popup: one row under another, scrolls if you've made lots */
+.rules {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* .reader-bar span cuts text short with …, but here you want to read the whole rule */
+.rules span {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

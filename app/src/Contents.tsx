@@ -1,4 +1,5 @@
 import type { TocItem } from "./foliate";
+import "./Contents.css";
 
 type ContentsProps = {
   toc: TocItem[];

@@ -1,0 +1,35 @@
+/* The fix bar floats over the bottom bar when you select words in a novel */
+.fix-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--text);
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 7;
+  background: var(--page);
+}
+
+.fix-text {
+  flex: 1;
+  min-width: 120px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  /* long selections end in … so the buttons always fit */
+}
+
+.fix-bar input {
+  flex: 1;
+  min-width: 120px;
+  padding: 6px;
+  border: 1px solid var(--text);
+  border-radius: 8px;
+  font: inherit;
+  color: var(--text);
+  background: var(--page);
+}

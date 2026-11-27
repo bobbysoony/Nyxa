@@ -1,0 +1,73 @@
+/* The grey lines lie over the page while it opens, then fade away. Taps always go through to the page */
+.reader-placeholder {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  box-sizing: border-box;
+  background: var(--page);
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+}
+
+.reader-placeholder.done {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .reader-placeholder {
+    transition: opacity 0.3s;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .placeholder-title,
+  .placeholder-line {
+    animation: placeholder-pulse 1s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes placeholder-pulse {
+  to {
+    opacity: 0.04;
+  }
+}
+
+.placeholder-title,
+.placeholder-line {
+  border-radius: 4px;
+  background: var(--text);
+  opacity: 0.12;
+}
+
+.placeholder-title {
+  width: 45%;
+  height: 1.2em;
+  margin: 0.8em 0 1.6em;
+}
+
+/* A column, so the space above and below each line adds up instead of merging */
+.placeholder-paragraph {
+  display: flex;
+  flex-direction: column;
+}
+
+.placeholder-line {
+  height: 0.6em;
+}
+
+/* the same 720px column foliate puts scrolled text in, in the middle */
+/* keep in step with foliate's max-inline-size (paginator.js), or the lines and the text won't line up */
+.placeholder-column.scrolled {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+/* A message in the middle of the page, like "Nothing open yet" */
+.reader-message {
+  margin: auto;
+  max-width: 30em;
+  text-align: center;
+  opacity: 0.8;
+}

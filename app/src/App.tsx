@@ -1,3 +1,4 @@
+import "./App.css";
 import { useEffect, useRef, useState } from "react";
 import { load } from "@tauri-apps/plugin-store";
 import { exit, onBackButtonPress } from "@tauri-apps/api/app";
@@ -12,6 +13,7 @@ import Fps from "./Fps";
 import { checkForUpdates, type Check } from "./library/updates";
 import { countBadges } from "./library/db";
 import DownloadBar from "./DownloadBar";
+import AccountMenu from "./AccountMenu";
 import { retryFailed, startWaiting } from "./library/download";
 import "./App.css";
 
@@ -134,6 +136,7 @@ function App() {
           Notifications{notices ? ` (${notices})` : ""}
         </button>
       </nav>
+      <AccountMenu />
       <DownloadBar />
       {import.meta.env.DEV && <Fps />}
       {place.screen === "library" && <Library onReadNovel={readNovel} onReadBook={readBook} found={check?.found ?? 0} />}

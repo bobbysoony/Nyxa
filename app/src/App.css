@@ -53,54 +53,6 @@ button {
   outline: none;
 }
 
-.reader {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  position: relative;
-}
-
-.reader-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  height: 44px;
-  /* Shorter than the page's 48px top and bottom margins, so it never covers words */
-  box-sizing: border-box;
-  padding: 4px 8px;
-  position: absolute;
-  /* It floats over the page, so the page never changes size */
-  left: 0;
-  right: 0;
-  z-index: 5;
-  background: var(--page);
-}
-
-.reader-top {
-  top: 0;
-  z-index: 6;
-  /* Three columns: icons on the left, the title in the middle, Aa on the right.
-     The two sides are the same width, so the title stays in the centre */
-  display: grid;
-  grid-template-columns: 1fr minmax(0, max-content) 1fr;
-}
-
-.reader-bar-side {
-  display: flex;
-  gap: 4px;
-}
-
-.reader-bar-right {
-  justify-content: flex-end;
-}
-
-.reader-title {
-  font-size: 0.85em;
-  opacity: 0.8;
-  text-align: center;
-}
-
 /* Bar buttons are just the icon, no border and no shadow, with a soft patch behind it when you point at it or press it */
 .icon-button {
   width: 36px;
@@ -116,135 +68,6 @@ button {
 .icon-button:hover,
 .icon-button:active {
   background: rgba(127, 127, 127, 0.2);
-}
-
-.icon {
-  width: 22px;
-  height: 22px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.75;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-/* The grey lines lie over the page while it opens, then fade away. Taps always go through to the page */
-.reader-placeholder {
-  position: absolute;
-  inset: 0;
-  z-index: 4;
-  box-sizing: border-box;
-  background: var(--page);
-  display: flex;
-  flex-direction: column;
-  pointer-events: none;
-}
-
-.reader-placeholder.done {
-  opacity: 0;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .reader-placeholder {
-    transition: opacity 0.3s;
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .placeholder-title,
-  .placeholder-line {
-    animation: placeholder-pulse 1s ease-in-out infinite alternate;
-  }
-}
-
-@keyframes placeholder-pulse {
-  to {
-    opacity: 0.04;
-  }
-}
-
-.placeholder-title,
-.placeholder-line {
-  border-radius: 4px;
-  background: var(--text);
-  opacity: 0.12;
-}
-
-.placeholder-title {
-  width: 45%;
-  height: 1.2em;
-  margin: 0.8em 0 1.6em;
-}
-
-/* A column, so the space above and below each line adds up instead of merging */
-.placeholder-paragraph {
-  display: flex;
-  flex-direction: column;
-}
-
-.placeholder-line {
-  height: 0.6em;
-}
-
-/* the same 720px column foliate puts scrolled text in, in the middle */
-.placeholder-column.scrolled {
-  width: 100%;
-  max-width: 720px;
-  margin: 0 auto;
-}
-
-/* A message in the middle of the page, like "Nothing open yet" */
-.reader-message {
-  margin: auto;
-  max-width: 30em;
-  text-align: center;
-  opacity: 0.8;
-}
-
-/* The welcome note floats just under the top bar and fades away, taps go straight through it */
-.reader-note {
-  position: absolute;
-  top: 52px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 5;
-  padding: 6px 12px;
-  border-radius: 8px;
-  background: var(--page);
-  border: 1px solid var(--text);
-  font-size: 0.85em;
-  pointer-events: none;
-  white-space: nowrap;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .reader-note {
-    animation: note-fade 3s forwards;
-  }
-}
-
-@keyframes note-fade {
-  70% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
-.reader-bottom {
-  bottom: 0;
-}
-
-.reader-page {
-  flex: 1;
-  min-height: 0;
-}
-
-.reader-page foliate-view {
-  display: block;
-  width: 100%;
-  height: 100%;
 }
 
 .settings-panel {
@@ -294,16 +117,6 @@ body {
   margin: 0;
 }
 
-.theme-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.theme-buttons button:disabled {
-  outline: 2px solid var(--text);
-}
-
 .toggle {
   display: flex;
   align-items: center;
@@ -333,40 +146,6 @@ body {
   background-color: rgba(0, 0, 0, 0.5);
 }
 
-/* Hidden bars turn see-through and let taps go through to the page, so nothing moves */
-.reader.bars-hidden .reader-bar {
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* With a mouse, a hidden bar shows again while the mouse is over it at the top or bottom edge */
-@media (hover: hover) {
-  .reader.bars-hidden .reader-bar {
-    pointer-events: auto;
-  }
-
-  .reader.bars-hidden .reader-bar:hover {
-    opacity: 1;
-  }
-}
-
-/* A quick fade, unless your device is set to reduce motion */
-@media (prefers-reduced-motion: no-preference) {
-  .reader-bar {
-    transition: opacity 0.2s;
-  }
-}
-
-.about {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  padding-top: 12px;
-  border-top: 1px solid var(--text);
-  font-size: 0.9em;
-}
-
 .app {
   display: flex;
   flex-direction: column;
@@ -390,281 +169,20 @@ body {
   height: auto;
 }
 
-.browse {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 8px 16px;
-}
-
-.browse-bar {
-  display: flex;
-  gap: 8px;
-}
-
-.browse-bar input {
-  flex: 1;
-  min-width: 0;
-}
-
 .browse-html {
   white-space: pre-wrap;
   word-break: break-all;
   font-size: 12px;
 }
 
-.browse-results,
-.novel-chapters {
-  padding-left: 0;
-  list-style: none;
-}
-
-.browse-results button,
-.novel-chapters button {
-  width: 100%;
-  text-align: left;
-  margin: 2px 0;
-}
-
-.novel-summary {
-  white-space: pre-line;
-}
-
-.chapter-preview {
-  max-width: 40em;
-  line-height: 1.6;
-}
-
-.library-list ul {
-  padding-left: 0;
-  list-style: none;
-}
-
-.reader-bar span {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.reader-bar button {
-  white-space: nowrap;
-}
-
-.contents {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: min(85vw, 360px);
-  overflow-y: auto;
-  padding: 12px;
-  background: var(--page);
-  color: var(--text);
-  border-right: 1px solid var(--text);
-  box-shadow: 4px 0 16px rgba(0, 0, 0, 0.4);
-  z-index: 20;
-}
-
-.contents ol {
-  list-style: none;
-  padding-left: 0;
-}
-
-.contents details ol {
-  padding-left: 12px;
-}
-
-.contents summary {
-  cursor: pointer;
-  padding: 6px 0;
-  font-weight: 600;
-}
-
-.contents-item {
-  display: block;
-  width: 100%;
-  text-align: left;
-  margin: 2px 0;
-}
-
-.contents-item.current {
-  outline: 2px solid var(--text);
-}
-
 :root {
   --done: #3a9d5d;
-}
-
-.contents-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.contents-row .contents-item {
-  flex: 1;
-  min-width: 0;
-}
-
-.read-tick {
-  padding: 0.3em 0.6em;
-  opacity: 0.4;
-}
-
-.read-tick.read {
-  opacity: 1;
-  color: white;
-  background: var(--done);
-  border-color: var(--done);
-}
-
-.unread {
-  margin-left: 8px;
-  font-size: 0.85em;
-  opacity: 0.75;
-}
-
-.read-badge {
-  margin-left: 8px;
-  padding: 1px 8px;
-  border-radius: 999px;
-  color: white;
-  background: var(--done);
-  font-size: 0.75em;
-  font-weight: 600;
-  vertical-align: middle;
-}
-
-.library {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 16px;
-  padding: 16px;
-}
-
-.library-tile {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 0;
-  border: none;
-  background: none;
-  box-shadow: none;
-  text-align: left;
-}
-
-.library-cover {
-  position: relative;
-  aspect-ratio: 2 / 3;
-  overflow: hidden;
-  border-radius: 8px;
-  background: rgba(128, 128, 128, 0.2);
-}
-
-.library-cover img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.library-no-cover {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  padding: 8px;
-  text-align: center;
-  font-size: 0.85em;
-}
-
-.library-done {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--done);
-}
-
-.library-done svg {
-  width: 14px;
-  height: 14px;
-  fill: none;
-  stroke: white;
-  stroke-width: 2.5;
-}
-
-.library-title {
-  /* titles stay on one line so every tile lines up, long ones get … at the end */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 0.85em;
-  line-height: 1.3;
-}
-
-.library-progress {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 0.75em;
-  opacity: 0.7;
-  white-space: nowrap;
-}
-
-.library-kind {
-  flex: none;
-  width: 1.1em;
-  height: 1.1em;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.3;
-  stroke-linejoin: round;
-}
-
-.library-status {
-  padding: 16px;
-}
-
-.reader-time-left {
-  opacity: 0.7;
-}
-
-.library-new {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--done);
-  color: #fff;
-  font-size: 0.75em;
-  font-weight: bold;
 }
 
 .updates {
   flex: 1;
   overflow-y: auto;
   padding: 8px 16px;
-}
-
-.updates-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding-bottom: 8px;
-}
-
-/* The text takes the spare room, so both buttons sit together on the right. */
-.updates-bar span {
-  flex: 1;
 }
 
 .updates-row {
@@ -679,30 +197,6 @@ body {
 
 .updates-row.fresh {
   opacity: 1;
-}
-
-/* a div, not a button like the update rows, so it draws its own box */
-.notification {
-  gap: 10px;
-  padding: 0.6em 1.2em;
-  border: 1px solid var(--text);
-  border-radius: 8px;
-  box-sizing: border-box;
-}
-
-.notification-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.updates-novel {
-  font-size: 0.8em;
-  font-weight: bold;
-}
-
-.updates-saved {
-  font-size: 0.8em;
 }
 
 .confirm {
@@ -728,216 +222,10 @@ body {
   gap: 8px;
 }
 
-.download-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 4px 16px;
-  font-size: 0.85em;
-}
-
-.download-bar button {
-  padding: 2px 10px;
-}
-
-.auto-download {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.auto-download label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.auto-download input {
-  padding: 0;
-  background: none;
-  box-shadow: none;
-}
-
-.read-chapters {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* one box around the "Read up to chapter" button and the row it opens */
-.read-up-to-group {
-  display: flex;
-  flex-direction: column;
-  border: 1px solid var(--text);
-  border-radius: 8px;
-  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
-}
-
-.read-up-to-group>button {
-  border: none;
-  box-shadow: none;
-  background: none;
-}
-
-.read-up-to {
-  display: flex;
-  gap: 8px;
-  padding: 0 10px 10px;
-}
-
-.read-up-to input {
-  flex: 1;
-  min-width: 0;
-  appearance: textfield;
-  /* no up/down arrows, you type the number */
-}
-
-.read-up-to input::-webkit-inner-spin-button {
-  display: none;
-}
-
-/* Above everything (dialogs top out at 20), and clicks pass through it. */
-.fps {
-  position: fixed;
-  top: 4px;
-  right: 4px;
-  z-index: 100;
-  padding: 2px 6px;
-  font-size: 0.75em;
-  background: rgba(0, 0, 0, 0.6);
-  color: #fff;
-  border-radius: 4px;
-  pointer-events: none;
-}
-
-.library-bar {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 16px 16px 0;
-  flex-wrap: wrap;
-}
-
-.library-screen {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-}
-
-.library-bar input {
-  flex: 1;
-  min-width: 0;
-  min-width: 140px;
-}
-
-.library-heading {
-  margin: 16px 16px 0;
-  font-size: 0.9em;
-  opacity: 0.7;
-}
-
-/* Nyxa's own drop-down: the list hangs under its button */
-.dropdown {
-  position: relative;
-}
-
-.dropdown-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 29;
-}
-
-.dropdown-list {
-  position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
-  z-index: 30;
-  /* above the see through sheet, so the options can be tapped */
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 100%;
-  padding: 6px;
-  border: 1px solid var(--text);
-  border-radius: 8px;
-  background: var(--page);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.dropdown-list button {
-  border-color: transparent;
-  box-shadow: none;
-  text-align: left;
-  white-space: nowrap;
-}
-
-.dropdown-list button[aria-selected="true"] {
-  border-color: var(--text);
-}
-
-/* The fix bar floats over the bottom bar when you select words in a novel */
-.fix-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-top: 1px solid var(--text);
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 7;
-  background: var(--page);
-}
-
-.fix-text {
-  flex: 1;
-  min-width: 120px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  /* long selections end in … so the buttons always fit */
-}
-
-.fix-bar input {
-  flex: 1;
-  min-width: 120px;
-  padding: 6px;
-  border: 1px solid var(--text);
-  border-radius: 8px;
-  font: inherit;
-  color: var(--text);
-  background: var(--page);
-}
-
-.swap-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-}
-
 /* the fix bar sits at the bottom of the screen, so its drop-down opens upwards */
 .fix-bar .dropdown-list {
   top: auto;
   bottom: calc(100% + 4px);
-}
-
-/* the hidden & replaced words popup: one row under another, scrolls if you've made lots */
-.rules {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-height: 70vh;
-  overflow-y: auto;
-}
-
-/* .reader-bar span cuts text short with …, but here you want to read the whole rule */
-.rules span {
-  white-space: normal;
-  overflow-wrap: anywhere;
 }
 
 .novel-page .dropdown {
@@ -947,4 +235,24 @@ body {
 .novel-page .dropdown-list {
   left: 0;
   right: auto;
+}
+
+/* On a phone the tabs are wider than the screen, so they scroll sideways and leave room for the profile icon */
+.app-tabs {
+  overflow-x: auto;
+  margin-right: 52px;
+}
+
+/* The profile icon sits at the top right of every screen, and its menu opens under it */
+.app {
+  position: relative;
+}
+
+.account .settings-panel {
+  right: 0;
+}
+
+.sync-note {
+  opacity: 0.7;
+  font-size: 0.9em;
 }

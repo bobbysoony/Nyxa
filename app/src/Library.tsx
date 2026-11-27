@@ -8,6 +8,7 @@ import { continueReading, listTiles, searchTiles, sortTiles, type Sort, type Til
 import { lists, toList, type List } from "./library/lists";
 import Dropdown from "./Dropdown";
 import Tick from "./Tick";
+import "./Library.css";
 
 type LibraryProps = {
   onReadNovel: (id: number) => void;

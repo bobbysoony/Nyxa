@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { clearUpdates, getNovel, listUpdates, saveNovelPosition, type UpdateRow } from "./library/db";
 import type { Check } from "./library/updates";
 import Confirm from "./Confirm";
+import "./Updates.css";
 
 type UpdatesProps = {
   check: Check | null;

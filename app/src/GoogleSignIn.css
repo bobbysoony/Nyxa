@@ -1,0 +1,7 @@
+/* Sign in with Google, in the account menu */
+.sync {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}

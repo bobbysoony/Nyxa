@@ -1,0 +1,21 @@
+.updates-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 8px;
+}
+
+/* The text takes the spare room, so both buttons sit together on the right. */
+.updates-bar span {
+  flex: 1;
+}
+
+.updates-novel {
+  font-size: 0.8em;
+  font-weight: bold;
+}
+
+.updates-saved {
+  font-size: 0.8em;
+}
