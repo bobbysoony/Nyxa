@@ -1,6 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { open } from "@tauri-apps/plugin-dialog";
-import { readFile } from "@tauri-apps/plugin-fs";
 import { load } from "@tauri-apps/plugin-store";
 import "../foliate-js/view.js";
 import SettingsPanel from "./SettingsPanel";
@@ -20,13 +18,14 @@ import {
   markBookOpened,
   markNovelOpened,
 } from "./library/db";
-import { addBook, loadBook, tocHrefs } from "./library/books";
+import { loadBook, tocHrefs } from "./library/books";
 import { chapterFromHref, paragraphAt, positionHref } from "./library/position";
 import { finishedChapter } from "./library/finished";
 import { timeLeft, wordsLeft } from "./library/timeleft";
 import { applySwaps, hideMyFilters, tidy } from "./library/clean";
 import FixBar from "./FixBar";
 import Confirm from "./Confirm";
+import Icon from "./Icon";
 
 
 type ReaderProps = {
@@ -54,7 +53,6 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
   const [barsHidden, setBarsHidden] = useState(false);
   const [showContents, setShowContents] = useState(false);
   const [downloaded, setDownloaded] = useState<number | null>(null);
-  const [place, setPlace] = useState("");
   const [readChapters, setReadChapters] = useState<Set<number> | null>(null);
   const [words, setWords] = useState(0);
   const [picked, setPicked] = useState("");
@@ -140,22 +138,6 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
     view.renderer.setAttribute("flow", settings.readingMode);
   }
 
-  async function pickBook() {
-    try {
-      setError("");
-      const path = await open({
-        filters: [{ name: "EPUB books", extensions: ["epub"] }]
-      });
-      if (!path) return;
-
-      const id = await addBook(await readFile(path));
-      await openEpub(id);
-    } catch (err) {
-      setError("Failed to open book");
-      console.error(err);
-    }
-  }
-
   async function openEpub(id: number) {
     const loaded = await loadBook(id);
     if (!loaded) return null;
@@ -172,16 +154,13 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
     return loaded.row.title;
   }
 
-  async function reopenLastBook(epubOnly = false) {
+  async function reopenLastBook() {
     try {
       const store = await load("nyxa.json");
       const lastNovel = await store.get<number | null>("lastNovel");
-      if (lastNovel && !epubOnly) {
-        await openNovel(lastNovel);
-        return;
-      }
       const lastBookId = await store.get<number>("lastBookId");
-      const title = lastBookId ? await openEpub(lastBookId) : null;
+      // the last thing you read, a web novel or an EPUB, both get the welcome
+      const title = lastNovel ? await openNovel(lastNovel) : lastBookId ? await openEpub(lastBookId) : null;
       if (!title) return;
 
       setWelcome(`Welcome back to ${title}!`);
@@ -214,6 +193,7 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
     setReadChapters(new Set(book.chapters.filter((c) => c.read).map((c) => c.number)));
     await openBook(book, position);
     setDownloaded(book.chapters.filter((chapter) => chapter.downloaded).length);
+    return book.metadata?.title;
   }
 
   function markRead(number: number, read: boolean) {
@@ -312,13 +292,11 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
       const novel = novelRef.current;
       if (novel) {
         const index = e.detail.section?.current ?? 0;
-        setPlace(novel.places[index] ?? "");
         saveNovelPosition(novel.novelId, novel.chapters[index].number, paragraphAt(e.detail.range));
         const finished = finishedChapter(lastIndexRef.current, index);
         lastIndexRef.current = index;
         if (finished !== null) markRead(novel.chapters[finished].number, true);
       } else {
-        setPlace("");
         if (bookIdRef.current) saveBookPosition(bookIdRef.current, e.detail.cfi);
         const index = tocHrefsRef.current.indexOf(e.detail.tocItem?.href ?? "");
         if (index < 0) return;
@@ -358,16 +336,27 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
   return (
     <div className={barsHidden ? "reader bars-hidden" : "reader"}>
       <div className="reader-bar reader-top">
-        <button onClick={pickBook}>📖 Open book</button>
-        <button onClick={() => reopenLastBook(true)}>📚 Last EPUB</button>
-        <button onClick={() => setShowContents(true)}>☰ Contents</button>
-        {novelRef.current && (
-          <button onClick={() => novelRef.current && onShowNovel(novelRef.current.novelId)}>ℹ Novel page</button>
-        )}
-        <span>{title}</span>
-        {error && <span>{error}</span>}
-        <span>{welcome}</span>
-        <button onClick={() => setShowSettings(!showSettings)}>Aa</button>
+        <div className="reader-bar-side">
+          <button className="icon-button" aria-label="Contents" title="Contents" onClick={() => setShowContents(true)}>
+            <Icon name="contents" />
+          </button>
+          {novelRef.current && (
+            <button
+              className="icon-button"
+              aria-label="Novel page"
+              title="Novel page"
+              onClick={() => novelRef.current && onShowNovel(novelRef.current.novelId)}
+            >
+              <Icon name="info" />
+            </button>
+          )}
+        </div>
+        <span className="reader-title">{error || title}</span>
+        <div className="reader-bar-side reader-bar-right">
+          <button className="icon-button" aria-label="Text and colours" title="Text and colours" onClick={() => setShowSettings(!showSettings)}>
+            <Icon name="text" />
+          </button>
+        </div>
         {showSettings && (
           <div className="backdrop" onClick={() => setShowSettings(false)}></div>
         )}
@@ -375,6 +364,9 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
           <SettingsPanel settings={settings} onChange={onSettingsChange} />
         )}
       </div>
+
+      {/* It floats over the page and fades out on its own, so the bar never moves */}
+      {welcome && <div className="reader-note">{welcome}</div>}
 
       <div className="reader-page" ref={containerRef} onClick={(e) => tapAt(e.clientX)}></div>
 
@@ -417,14 +409,18 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
       )}
 
       <div className="reader-bar reader-bottom">
-        <button onClick={() => viewRef.current?.prev()}>◀ Back</button>
+        <button className="icon-button" aria-label="Back" title="Back" onClick={() => viewRef.current?.prev()}>
+          <Icon name="back" />
+        </button>
         {settings.readingMode === "scrolled" && (
           <span>
-            {place || chapter} {progress}%
+            {chapter} {progress}%
             {settings.showTimeLeft && left && <span className="reader-time-left"> · {left}</span>}
           </span>
         )}
-        <button onClick={() => viewRef.current?.next()}>Next ▶</button>
+        <button className="icon-button" aria-label="Next" title="Next" onClick={() => viewRef.current?.next()}>
+          <Icon name="next" />
+        </button>
       </div>
     </div>
   );

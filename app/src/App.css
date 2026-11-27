@@ -65,18 +65,98 @@ button {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 8px 16px;
-  position: absolute; /* It floats over the page, so the page never changes size */
+  height: 44px;
+  /* Shorter than the page's 48px top and bottom margins, so it never covers words */
+  box-sizing: border-box;
+  padding: 4px 8px;
+  position: absolute;
+  /* It floats over the page, so the page never changes size */
   left: 0;
   right: 0;
   z-index: 5;
   background: var(--page);
 }
 
-/* The top bar sits one layer higher, so the Aa backdrop inside it also covers the bottom bar */
 .reader-top {
   top: 0;
   z-index: 6;
+  /* Three columns: icons on the left, the title in the middle, Aa on the right.
+     The two sides are the same width, so the title stays in the centre */
+  display: grid;
+  grid-template-columns: 1fr minmax(0, max-content) 1fr;
+}
+
+.reader-bar-side {
+  display: flex;
+  gap: 4px;
+}
+
+.reader-bar-right {
+  justify-content: flex-end;
+}
+
+.reader-title {
+  font-size: 0.85em;
+  opacity: 0.8;
+  text-align: center;
+}
+
+/* Bar buttons are just the icon, no border and no shadow, with a soft patch behind it when you point at it or press it */
+.icon-button {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  display: grid;
+  place-items: center;
+}
+
+.icon-button:hover,
+.icon-button:active {
+  background: rgba(127, 127, 127, 0.2);
+}
+
+.icon {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The welcome note floats just under the top bar and fades away, taps go straight through it */
+.reader-note {
+  position: absolute;
+  top: 52px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--page);
+  border: 1px solid var(--text);
+  font-size: 0.85em;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .reader-note {
+    animation: note-fade 3s forwards;
+  }
+}
+
+@keyframes note-fade {
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 .reader-bottom {
@@ -285,10 +365,6 @@ body {
 .library-list ul {
   padding-left: 0;
   list-style: none;
-}
-
-.reader-bar {
-  flex-wrap: wrap;
 }
 
 .reader-bar span {
@@ -625,7 +701,7 @@ body {
   box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
 }
 
-.read-up-to-group > button {
+.read-up-to-group>button {
   border: none;
   box-shadow: none;
   background: none;
@@ -640,7 +716,8 @@ body {
 .read-up-to input {
   flex: 1;
   min-width: 0;
-  appearance: textfield; /* no up/down arrows, you type the number */
+  appearance: textfield;
+  /* no up/down arrows, you type the number */
 }
 
 .read-up-to input::-webkit-inner-spin-button {

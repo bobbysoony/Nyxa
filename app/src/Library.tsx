@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { open } from "@tauri-apps/plugin-dialog";
+import { readFile } from "@tauri-apps/plugin-fs";
 import { listBooks, listNovels } from "./library/db";
-import { moveOldBooks, prepareBooks, refreshCovers } from "./library/books";
+import { addBook, moveOldBooks, prepareBooks, refreshCovers } from "./library/books";
 import { coverLink } from "./library/covers";
 import { continueReading, listTiles, searchTiles, sortTiles, type Sort, type Tile } from "./library/shelf";
 import { lists, toList, type List } from "./library/lists";
@@ -57,6 +59,7 @@ function Library({ onReadNovel, onReadBook, found }: LibraryProps) {
   const [list, setList] = useState<List | "all">("all");
   const [refreshing, setRefreshing] = useState(false);
   const [reload, setReload] = useState(0); // bumping it re-runs the effect below, so new covers show
+  const [error, setError] = useState("");
 
   useEffect(() => {
     let links: string[] = [];
@@ -74,6 +77,21 @@ function Library({ onReadNovel, onReadBook, found }: LibraryProps) {
     setRefreshing(false);
     setReload((n) => n + 1);
   }
+
+  // Moved here from the reader, opening a file isn't something you do while reading
+  async function addEpub() {
+    try {
+      setError("");
+      const path = await open({ filters: [{ name: "EPUB books", extensions: ["epub"] }] });
+      if (!path) return;
+      onReadBook(await addBook(await readFile(path)));
+    } catch (err) {
+      setError("Couldn't open that book");
+      console.error(err);
+    }
+  }
+
+  const addButton = <button onClick={addEpub}>Add EPUB</button>;
 
   async function loadTiles() {
     await moveOldBooks();
@@ -113,7 +131,13 @@ function Library({ onReadNovel, onReadBook, found }: LibraryProps) {
 
   if (!tiles) return <p className="library-status">Loading your library…</p>;
   if (!tiles.length) {
-    return <p className="library-status">Nothing here yet: open an EPUB, or add a novel in Browse.</p>;
+    return (
+      <div className="library-status">
+        <p>Nothing here yet: add an EPUB, or add a novel in Browse.</p>
+        {addButton}
+        {error && <p>{error}</p>}
+      </div>
+    );
   }
 
   const shown = sortTiles(searchTiles(listTiles(tiles, list), query), sort);
@@ -152,7 +176,9 @@ function Library({ onReadNovel, onReadBook, found }: LibraryProps) {
         <button onClick={refresh} disabled={refreshing}>
           {refreshing ? "Refreshing…" : "Refresh"}
         </button>
+        {addButton}
       </div>
+      {error && <p className="library-status">{error}</p>}
 
       {reading.length > 0 && (
         <>

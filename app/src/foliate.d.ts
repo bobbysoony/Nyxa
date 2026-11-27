@@ -48,7 +48,8 @@ export interface FoliateView extends HTMLElement {
     // They're null in scroll mode.
     heads: HTMLElement[] | null;
     feet: HTMLElement[] | null;
-  }; open(book: File | FoliateBook): Promise<void>;
+  };
+  open(book: File | FoliateBook): Promise<void>;
   init(options: { lastLocation?: string; showTextStart?: boolean }): Promise<void>;
   goTo(target: string | number): Promise<unknown>;
   prev(): Promise<void>;
