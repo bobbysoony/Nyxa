@@ -38,6 +38,13 @@ export function signOut() {
 // Thrown for problems the user can understand, so the button can show the message as it is
 export class SignInError extends Error {}
 
+// Ends the sign-in that's waiting, if there is one. Set inside signInWithGoogle, the same trick as gotUrl
+let stopWaiting: (err: SignInError) => void = () => {};
+
+export function cancelSignIn() {
+  stopWaiting(new SignInError("Sign-in was cancelled."));
+}
+
 // Turns bytes into text that's safe inside a link (base64 with - and _ instead of + and /, and no = on the end)
 function linkSafe(bytes: Uint8Array) {
   return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -66,6 +73,7 @@ export async function signInWithGoogle(): Promise<GoogleAccount> {
   const unlisten = await onUrl(gotUrl);
   let timer = 0;
   const tooLong = new Promise<never>((_, reject) => {
+    stopWaiting = reject;
     timer = window.setTimeout(() => reject(new SignInError("Sign-in took too long. Try again.")), WAIT);
   });
 

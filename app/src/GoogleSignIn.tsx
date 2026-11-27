@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { currentAccount, googleReady, signInWithGoogle, SignInError, signOut } from "./sync/google";
+import { cancelSignIn, currentAccount, googleReady, signInWithGoogle, SignInError, signOut } from "./sync/google";
 import "./GoogleSignIn.css";
 
 function GoogleSignIn() {
@@ -27,7 +27,7 @@ function GoogleSignIn() {
     <div className="sync">
       {account ? (
         <>
-          <span>Signed in as {account.email}</span>
+          <span>Signed in as {account.name} ({account.email})</span>
           <button
             onClick={() => {
               signOut();
@@ -38,9 +38,12 @@ function GoogleSignIn() {
           </button>
         </>
       ) : (
-        <button disabled={waiting} onClick={signIn}>
-          {waiting ? "Finish signing in in your browser…" : "Sign in with Google"}
-        </button>
+        <>
+          <button disabled={waiting} onClick={signIn}>
+            {waiting ? "Finish signing in in your browser…" : "Sign in with Google"}
+          </button>
+          {waiting && <button onClick={cancelSignIn}>Cancel</button>}
+        </>
       )}
       {error && <span className="sync-note">{error}</span>}
     </div>
