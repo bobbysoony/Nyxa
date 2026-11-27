@@ -81,7 +81,7 @@ export function makeBookCSS(settings: Settings) {
     .credits {
       opacity: 0.6;
     }
-      /* The same gap after every paragraph, whatever the site or the book's maker did */
+    /* The same gap after every paragraph, whatever the site or the book's maker did */
     body p {
       margin: 0 0 ${settings.paragraphGap}em !important;
     }

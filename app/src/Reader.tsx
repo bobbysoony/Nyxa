@@ -26,7 +26,7 @@ import { applySwaps, curlyPage, hideMyFilters, tidy } from "./library/clean";
 import FixBar from "./FixBar";
 import Confirm from "./Confirm";
 import Icon from "./Icon";
-
+import Placeholder from "./Placeholder";
 
 type ReaderProps = {
   settings: Settings;
@@ -60,6 +60,7 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
   // the book's click listener is made once when a chapter loads, so reading barsHidden there would be stuck on the old value
   // the ref always has the newest one
   const barsHiddenRef = useRef(barsHidden);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     barsHiddenRef.current = barsHidden;
@@ -105,9 +106,12 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
   }, []);
 
   function start() {
-    if (novelId) openNovel(novelId);
-    else if (bookId) openEpub(bookId);
-    else reopenLastBook();
+    const opening = novelId ? openNovel(novelId) : bookId ? openEpub(bookId) : reopenLastBook();
+    // If opening breaks, say so on the page, or the grey lines would wait there forever
+    opening.catch((err) => {
+      setError("Couldn't open this book");
+      console.error(err);
+    });
   }
 
   // The load listener below is made once per book, so it reads the settings from here to get the newest ones.
@@ -140,7 +144,10 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
 
   async function openEpub(id: number) {
     const loaded = await loadBook(id);
-    if (!loaded) return null;
+    if (!loaded) {
+      setError("This book's file is missing. Add it again from the Library.");
+      return null;
+    }
 
     bookIdRef.current = id;
     novelRef.current = null;
@@ -159,6 +166,10 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
       const store = await load("nyxa.json");
       const lastNovel = await store.get<number | null>("lastNovel");
       const lastBookId = await store.get<number>("lastBookId");
+      if (!lastNovel && !lastBookId) {
+        setError("Nothing open yet. Pick a book or a novel in the Library.");
+        return;
+      }
       // the last thing you read, a web novel or an EPUB, both get the welcome
       const title = lastNovel ? await openNovel(lastNovel) : lastBookId ? await openEpub(lastBookId) : null;
       if (!title) return;
@@ -277,6 +288,7 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
 
   async function openBook(book: File | FoliateBook, position?: string) {
     setDownloaded(null); // EPUB files have no download count
+    setLoading(true);
     viewRef.current?.remove();
 
     const view = document.createElement("foliate-view");
@@ -284,6 +296,7 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
     viewRef.current = view;
 
     view.addEventListener("relocate", (e) => {
+      setLoading(false); // the first relocate means the words are on the page
       fillFrame(view, e.detail);
       setChapter(e.detail.tocItem?.label ?? "");
       setProgress(Math.round((e.detail.fraction ?? 0) * 100));
@@ -308,6 +321,8 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
 
     view.addEventListener("load", (e) => {
       const doc = e.detail.doc;
+      // curly quotes first, so your swaps match the words you actually see,
+      // and taking a swap away puts back the curly version, not the straight one
       curlyPage(doc);
       applyMyFixes(doc);
       doc.addEventListener("keydown", handleKey);
@@ -352,7 +367,7 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
             </button>
           )}
         </div>
-        <span className="reader-title">{error || title}</span>
+        <span className="reader-title">{title}</span>
         <div className="reader-bar-side reader-bar-right">
           <button className="icon-button" aria-label="Text and colours" title="Text and colours" onClick={() => setShowSettings(!showSettings)}>
             <Icon name="text" />
@@ -370,7 +385,8 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
       {welcome && <div className="reader-note">{welcome}</div>}
 
       <div className="reader-page" ref={containerRef} onClick={(e) => tapAt(e.clientX)}></div>
-
+      <Placeholder settings={settings} shown={loading || error !== ""} message={error} />
+      
       {showContents && (
         <Contents
           toc={viewRef.current?.book.toc ?? []}
