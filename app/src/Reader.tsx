@@ -7,7 +7,7 @@ import SettingsPanel from "./SettingsPanel";
 import { makeBookCSS, Settings } from "./settings";
 import { getTitle } from "./getTitle";
 import { tapAction } from "./taps";
-import type { FoliateBook, FoliateView } from "./foliate";
+import type { FoliateBook, FoliateView, RelocateDetail } from "./foliate";
 import { makeNovelBook, type NovelBook } from "./library/novelBook";
 import Contents from "./Contents.tsx";
 import {
@@ -59,6 +59,8 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
   const [words, setWords] = useState(0);
   const [picked, setPicked] = useState("");
   const [hiding, setHiding] = useState<{ everywhere: boolean } | null>(null);
+  // the book's click listener is made once when a chapter loads, so reading barsHidden there would be stuck on the old value
+  // the ref always has the newest one
   const barsHiddenRef = useRef(barsHidden);
 
   useEffect(() => {
@@ -68,7 +70,10 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
   function handleKey(e: KeyboardEvent) {
     if (e.key === "ArrowRight") viewRef.current?.goRight();
     if (e.key === "ArrowLeft") viewRef.current?.goLeft();
-    if (e.key === "Escape") {setShowSettings(false); setBarsHidden(true);}
+    if (e.key === "Escape") {
+      setShowSettings(false);
+      setBarsHidden(true);
+    }
   }
 
   function tapAt(x: number) {
@@ -271,6 +276,25 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
     });
   }
 
+  // Writes the chapter name in the page's top margin and how far you are in the bottom one.
+  // foliate empties these spots every time it lays the page out again.
+  // A relocate always comes after that, so filling them on every relocate keeps them full.
+  function fillFrame(view: FoliateView, detail: RelocateDetail) {
+    const { heads, feet } = view.renderer;
+    if (!heads || !feet) return; // Scroll mode has no top and bottom margins, so there's no frame
+
+    const novel = novelRef.current;
+    const place = novel?.places[detail.section?.current ?? 0] ?? "";
+    const progress = `${Math.round((detail.fraction ?? 0) * 100)}%`;
+    const { showTimeLeft, wordsPerMinute } = settingsRef.current;
+    const left = showTimeLeft ? timeLeft(wordsLeft(detail.range), wordsPerMinute) : "";
+
+    // With two columns there are two spots, and the text goes in the right one
+    heads[heads.length - 1].textContent = detail.tocItem?.label ?? "";
+    if (heads.length > 1) heads[0].textContent = getTitle(view.book.metadata?.title);
+    feet[feet.length - 1].textContent = [place, progress, left].filter((part) => part !== "").join(" · ");
+  }
+
   async function openBook(book: File | FoliateBook, position?: string) {
     setDownloaded(null); // EPUB files have no download count
     viewRef.current?.remove();
@@ -280,6 +304,7 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
     viewRef.current = view;
 
     view.addEventListener("relocate", (e) => {
+      fillFrame(view, e.detail);
       setChapter(e.detail.tocItem?.label ?? "");
       setProgress(Math.round((e.detail.fraction ?? 0) * 100));
       setWords(wordsLeft(e.detail.range));
@@ -393,10 +418,12 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
 
       <div className="reader-bar reader-bottom">
         <button onClick={() => viewRef.current?.prev()}>◀ Back</button>
-        <span>
-          {place || chapter} {progress}%
-          {settings.showTimeLeft && left && <span className="reader-time-left"> · {left}</span>}
-        </span>
+        {settings.readingMode === "scrolled" && (
+          <span>
+            {place || chapter} {progress}%
+            {settings.showTimeLeft && left && <span className="reader-time-left"> · {left}</span>}
+          </span>
+        )}
         <button onClick={() => viewRef.current?.next()}>Next ▶</button>
       </div>
     </div>

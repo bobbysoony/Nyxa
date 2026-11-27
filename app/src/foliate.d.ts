@@ -41,8 +41,14 @@ export type FoliateBook = {
 
 export interface FoliateView extends HTMLElement {
   book: FoliateBook;
-  renderer: HTMLElement & { setStyles(css: string): void; getContents(): { doc: Document }[] };
-  open(book: File | FoliateBook): Promise<void>;
+  renderer: HTMLElement & {
+    setStyles(css: string): void;
+    getContents(): { doc: Document }[];
+    // The spots in the page's top and bottom margins, one for each column.
+    // They're null in scroll mode.
+    heads: HTMLElement[] | null;
+    feet: HTMLElement[] | null;
+  }; open(book: File | FoliateBook): Promise<void>;
   init(options: { lastLocation?: string; showTextStart?: boolean }): Promise<void>;
   goTo(target: string | number): Promise<unknown>;
   prev(): Promise<void>;

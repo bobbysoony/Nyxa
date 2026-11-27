@@ -106,13 +106,8 @@ export async function makeNovelBook(novelId: number): Promise<NovelBook | null> 
   });
 
   const volumes = groupVolumes(chapters);
-  const places = volumes.flatMap((volume) =>
-    volume.chapters.map((chapter) =>
-      volume.label.startsWith("Chapters ")
-        ? `Chapter ${chapter.number}`
-        : `${volume.label} · Chapter ${chapter.number}`,
-    ),
-  );
+  // the chapter's own name, like "Chapter 38: Questions in the Dark", same as an EPUB shows
+  const places = chapters.map((chapter) => chapter.name);
 
   const toc = volumes.map((volume) => ({
     label: volume.label,
