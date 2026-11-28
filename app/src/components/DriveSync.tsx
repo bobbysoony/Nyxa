@@ -1,15 +1,13 @@
 import { useState } from "react";
 import { Settings, defaultSettings } from "../settings";
-import { loadSyncFile, saveSyncFile, SyncFile } from "../sync/drive";
+import { loadSyncFile, SyncFile } from "../sync/drive";
 import { SignInError } from "../sync/google";
+import { syncNow } from "../sync/sync";
 
 type DriveSyncProps = {
   settings: Settings;
   onSettingsChange: (settings: Settings) => void;
 };
-
-// Just so the other device can say where the file came from
-const thisDevice = navigator.userAgent.includes("Android") ? "your phone" : "a computer";
 
 function DriveSync({ settings, onSettingsChange }: DriveSyncProps) {
   const [busy, setBusy] = useState(false);
@@ -32,7 +30,8 @@ function DriveSync({ settings, onSettingsChange }: DriveSyncProps) {
 
   const save = () =>
     run(async () => {
-      await saveSyncFile({ savedAt: Date.now(), device: thisDevice, settings });
+      // A sync that sends your settings too, so your places in the file are kept
+      await syncNow(settings);
       setFound(null);
       setNote("Saved to your Drive");
     });

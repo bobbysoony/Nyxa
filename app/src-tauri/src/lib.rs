@@ -84,7 +84,20 @@ fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/013_back_from_hiatus.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 14,
+            description: "changed at",
+            sql: include_str!("../migrations/014_changed_at.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
+}
+
+// The computer's name as Windows calls it, so a synced phone can say where your place came from.
+// Empty anywhere that doesn't set COMPUTERNAME, and the app falls back to "a computer"
+#[tauri::command]
+fn computer_name() -> String {
+    std::env::var("COMPUTERNAME").unwrap_or_default()
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -115,7 +128,8 @@ pub fn run() {
         .plugin(tauri_plugin_oauth::init())
         .invoke_handler(tauri::generate_handler![
             chapters::save_chapter_text,
-            chapters::load_chapter_text
+            chapters::load_chapter_text,
+            computer_name
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

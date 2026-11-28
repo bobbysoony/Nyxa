@@ -1,6 +1,7 @@
 import { fetch } from "@tauri-apps/plugin-http";
 import { accessToken, SignInError } from "./google";
 import { Settings } from "../settings";
+import type { NovelPlace } from "./places";
 
 const FILES = "https://www.googleapis.com/drive/v3/files";
 const UPLOAD = "https://www.googleapis.com/upload/drive/v3/files";
@@ -8,8 +9,8 @@ const UPLOAD = "https://www.googleapis.com/upload/drive/v3/files";
 // The one file Nyxa keeps in your Drive, it shows up in My Drive with this name
 const NAME = "Nyxa sync.json";
 
-// What goes in the file for now, lesson 26d adds your place, lists and ticks
-export type SyncFile = { savedAt: number; device: string; settings: Settings };
+// What goes in the file. novels is missing in a file saved before lesson 26d, so it's optional
+export type SyncFile = { savedAt: number; device: string; settings: Settings; novels?: NovelPlace[] };
 
 // Every Drive request goes through here so the token and the error checks are in one place
 type DriveInit = { method?: string; headers?: Record<string, string>; body?: string };

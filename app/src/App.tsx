@@ -13,8 +13,10 @@ import Fps from "./components/Fps";
 import { checkForUpdates, type Check } from "./library/updates";
 import { countBadges } from "./library/db";
 import DownloadBar from "./components/DownloadBar";
+import SyncBar from "./components/SyncBar";
 import AccountMenu from "./components/AccountMenu";
 import { retryFailed, startWaiting } from "./library/download";
+import { syncNow } from "./sync/sync";
 import "./App.css";
 
 function App() {
@@ -30,6 +32,21 @@ function App() {
     loadSettings();
     checkOnOpen();
     startWaiting(); // finish downloads that were still queued when Nyxa last closed
+  }, []);
+
+  // Sync when Nyxa opens, whenever you switch away from it or back to it,
+  // and every minute while it's on screen, so reading on your phone shows up on a PC that's just sitting open
+  useEffect(() => {
+    const sync = () => syncNow().catch(console.error);
+    sync();
+    document.addEventListener("visibilitychange", sync);
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") sync();
+    }, 60_000);
+    return () => {
+      document.removeEventListener("visibilitychange", sync);
+      clearInterval(timer);
+    };
   }, []);
 
   useEffect(() => {
@@ -121,7 +138,7 @@ function App() {
     go({ ...reader, bookId: id });
   }
 
-  if (!settings) return <p>Loading…</p>;
+  if (!settings) return <p>Loadingâ€¦</p>;
 
   return (
     <div className="app">
@@ -138,6 +155,7 @@ function App() {
       </nav>
       <AccountMenu settings={settings} onSettingsChange={changeSettings} />
       <DownloadBar />
+      <SyncBar />
       {import.meta.env.DEV && <Fps />}
       {place.screen === "library" && <Library onReadNovel={readNovel} onReadBook={readBook} found={check?.found ?? 0} />}
       {place.screen === "reader" && (

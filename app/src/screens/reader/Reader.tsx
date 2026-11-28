@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { load } from "@tauri-apps/plugin-store";
+import { syncNow, watchSync } from "../../sync/sync";
 import "../../../foliate-js/view.js";
 import SettingsPanel from "./SettingsPanel";
 import { makeBookCSS, Settings } from "../../settings";
@@ -46,6 +47,7 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
   const lastIndexRef = useRef<number | null>(null);
   const tocHrefsRef = useRef<string[]>([]);
   const startedRef = useRef(false);
+  const syncTimerRef = useRef(0);
   const [title, setTitle] = useState("");
   const [chapter, setChapter] = useState("");
   const [progress, setProgress] = useState(0);
@@ -106,6 +108,19 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
     startedRef.current = true;
     start();
   }, []);
+
+  // A sync brought in a newer place for the novel that's open (you read on, on another device), so go there
+  useEffect(
+    () =>
+      watchSync(async ({ take }) => {
+        const open = novelRef.current;
+        if (!open) return;
+        const novel = await getNovel(open.novelId);
+        const place = take.find((p) => p.source === novel?.source && p.path === novel?.path);
+        if (place?.chapter != null) viewRef.current?.goTo(positionHref(place.chapter, place.paragraph));
+      }),
+    [],
+  );
 
   function start() {
     const opening = novelId ? openNovel(novelId) : bookId ? openEpub(bookId) : reopenLastBook();
@@ -311,6 +326,9 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
         const finished = finishedChapter(lastIndexRef.current, index);
         lastIndexRef.current = index;
         if (finished !== null) markRead(novel.chapters[finished].number, true);
+        // every move restarts the 10 second wait, so your place goes out once you stop scrolling, not on every page
+        clearTimeout(syncTimerRef.current);
+        syncTimerRef.current = window.setTimeout(() => syncNow().catch(console.error), 10_000);
       } else {
         if (bookIdRef.current) saveBookPosition(bookIdRef.current, e.detail.cfi);
         const index = tocHrefsRef.current.indexOf(e.detail.tocItem?.href ?? "");

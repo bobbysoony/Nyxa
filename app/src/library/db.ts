@@ -2,6 +2,7 @@ import Database from "@tauri-apps/plugin-sql";
 import type { ChapterItem, SourceNovel } from "../sources/types";
 import { toList, type List } from "./lists";
 import { shouldComplete, shouldPause, toStatus, type Status } from "./status";
+import type { NovelPlace } from "../sync/places";
 
 export type NovelRow = {
   id: number;
@@ -18,6 +19,7 @@ export type NovelRow = {
   list: string;
   status: string;
   back_from_hiatus: number; // 1 = waiting in Notifications for you to pick a list
+  changed_at: number; // when the place or list last changed, so the sync file can tell which device is newer
 };
 
 export type ChapterRow = {
@@ -160,8 +162,10 @@ export async function saveAutoDownload(novelId: number, on: boolean, limit: numb
 export async function saveNovelPosition(novelId: number, chapter: number, paragraph: number) {
   const db = await getDb();
   await db.execute(
-    "UPDATE novels SET last_chapter = $1, last_paragraph = $2 WHERE id = $3",
-    [chapter, paragraph, novelId],
+    // Only when you really moved. Just opening a novel shouldn't count as newer than reading it on your phone
+    `UPDATE novels SET last_chapter = $1, last_paragraph = $2, changed_at = $4
+     WHERE id = $3 AND (last_chapter IS NOT $1 OR last_paragraph != $2)`,
+    [chapter, paragraph, novelId, Date.now()],
   );
 }
 
@@ -173,7 +177,26 @@ export async function markNovelOpened(novelId: number) {
 // moves a novel to another list, like from Reading to On hold
 export async function saveNovelList(novelId: number, list: List) {
   const db = await getDb();
-  await db.execute("UPDATE novels SET list = $1 WHERE id = $2", [list, novelId]);
+  await db.execute("UPDATE novels SET list = $1, changed_at = $3 WHERE id = $2", [list, novelId, Date.now()]);
+}
+
+// Every novel's place and list, ready for the sync file
+export async function listNovelPlaces() {
+  const db = await getDb();
+  return db.select<NovelPlace[]>(
+    `SELECT source, path, name, last_chapter AS chapter, last_paragraph AS paragraph, list, changed_at AS changedAt
+     FROM novels`,
+  );
+}
+
+// Copies a newer place from your other device. It keeps that device's time, so the two agree on which is newest
+export async function takeNovelPlace(place: NovelPlace) {
+  const db = await getDb();
+  await db.execute(
+    `UPDATE novels SET last_chapter = $1, last_paragraph = $2, list = $3, changed_at = $4
+     WHERE source = $5 AND path = $6`,
+    [place.chapter, place.paragraph, place.list, place.changedAt, place.source, place.path],
+  );
 }
 
 export async function setChapterRead(novelId: number, number: number, read: boolean) {
@@ -184,6 +207,17 @@ export async function setChapterRead(novelId: number, number: number, read: bool
     [read ? 1 : 0, novelId, number],
   );
   if (read && result.rowsAffected > 0) await moveIfFinished(novelId);
+}
+
+// Every chapter before a novel's place counts as read, the same as the Reader ticks them as you go.
+// Read ticks aren't in the sync file, so after a place comes in from another device this makes the
+// library's "12 / 300" match there too. Only adds ticks, never takes one away
+export async function tickChaptersBeforePlaces() {
+  const db = await getDb();
+  await db.execute(
+    `UPDATE chapters SET read = 1
+     WHERE read = 0 AND number < (SELECT last_chapter FROM novels WHERE novels.id = chapters.novel_id)`,
+  );
 }
 
 export async function markReadBefore(novelId: number, number: number) {
