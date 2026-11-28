@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { chapterName } from "./chapterName";
+import { chapterName, hasTitleAlready } from "./chapterName";
 import type { FoliateBook } from "../foliate";
 
 const book: FoliateBook = {
@@ -22,4 +22,15 @@ describe("chapterName", () => {
   test("a chapter that isn't in Contents gets no name", () => {
     expect(chapterName(book, 5)).toBe("");
   });
+});
+
+test("a one word name only counts if it's the whole first paragraph", () => {
+  expect(hasTitleAlready("I woke up before the sun.", "I")).toBe(false);
+  expect(hasTitleAlready(" I ", "I")).toBe(true);
+});
+
+test("a longer name counts when the first paragraph starts with it", () => {
+  expect(hasTitleAlready("Chapter 1 The Start", "Chapter 1")).toBe(true);
+  expect(hasTitleAlready("Chapter 12", "Chapter 1")).toBe(false);
+  expect(hasTitleAlready("It was a dark night.", "Chapter 1")).toBe(false);
 });

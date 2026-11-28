@@ -23,7 +23,7 @@ import { chapterFromHref, paragraphAt, positionHref } from "../../library/positi
 import { finishedChapter } from "../../library/finished";
 import { timeLeft, wordsLeft } from "../../library/timeleft";
 import { applySwaps, curlyPage, hideMyFilters, tidy } from "../../library/clean";
-import { chapterName } from "../../library/chapterName";
+import { chapterName, hasTitleAlready } from "../../library/chapterName";
 import FixBar from "./FixBar";
 import Confirm from "../../components/Confirm";
 import Icon from "../../components/Icon";
@@ -329,10 +329,9 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
       applyMyFixes(doc);
       // some EPUBs only put the chapter name in Contents, so show it at the top. An attribute, not a new tag,
       // so saved places that count the page's tags still point at the same spot
-      // some put it in a styled <p> instead of a heading, so skip it if the text already starts with the name
       const name = chapterName(view.book, e.detail.index);
-      const startsWithName = tidy(doc.body.textContent ?? "").toLowerCase().startsWith(tidy(name).toLowerCase());
-      if (!doc.body.querySelector("h1, h2, h3, h4, h5, h6") && !startsWithName) doc.body.dataset.title = name;
+      const firstParagraph = [...doc.body.querySelectorAll("p")].find((p) => tidy(p.textContent ?? "") !== "")?.textContent ?? "";
+      if (!doc.body.querySelector("h1, h2, h3, h4, h5, h6") && !hasTitleAlready(firstParagraph, name)) doc.body.dataset.title = name;
       doc.addEventListener("keydown", handleKey);
       doc.addEventListener("click", (ev) => handleBookClick(ev, doc));
       doc.addEventListener("selectionchange", () => {

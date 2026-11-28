@@ -1,5 +1,5 @@
 import { fetch } from "@tauri-apps/plugin-http";
-import { currentAccount, SignInError } from "./google";
+import { accessToken, SignInError } from "./google";
 import { Settings } from "../settings";
 
 const FILES = "https://www.googleapis.com/drive/v3/files";
@@ -12,12 +12,14 @@ const NAME = "Nyxa sync.json";
 export type SyncFile = { savedAt: number; device: string; settings: Settings };
 
 // Every Drive request goes through here so the token and the error checks are in one place
-async function drive(url: string, init: { method?: string; headers?: Record<string, string>; body?: string } = {}) {
-  const account = currentAccount();
-  if (!account) throw new SignInError("Sign in first.");
-  const res = await fetch(url, { ...init, headers: { ...init.headers, Authorization: `Bearer ${account.accessToken}` } });
-  // Google's pass only lasts an hour, and Nyxa can't get a new one by itself yet
-  if (res.status === 401) throw new SignInError("Google's sign-in ran out. Sign out and sign in again.");
+type DriveInit = { method?: string; headers?: Record<string, string>; body?: string };
+
+async function drive(url: string, init: DriveInit = {}, fresh = false): Promise<Response> {
+  const token = await accessToken(fresh);
+  const res = await fetch(url, { ...init, headers: { ...init.headers, Authorization: `Bearer ${token}` } });
+  // Google can refuse a pass before its hour is up, so get a new one and try once more
+  if (res.status === 401 && !fresh) return drive(url, init, true);
+  if (res.status === 401) throw new SignInError("Google won't let Nyxa in. Sign out and sign in again.");
   if (!res.ok) throw new Error(`drive ${res.status}: ${await res.text()}`);
   return res;
 }
