@@ -36,7 +36,15 @@ Found a problem? Aa → **Send feedback**.
 ## Credits
 
 - [foliate-js](https://github.com/johnfactotum/foliate-js) by John Factotum (MIT): renders the books
+- [LNReader](https://github.com/LNReader/lnreader) (MIT): ideas for how sources and chapter loading work
 
 ## Licence
-Nyxa is free to use, change and share for non-commercial purposes under the PolyForm Noncommercial License 1.0.0 (see LICENSE). Nobody may sell it or make money from it. foliate-js keeps its own MIT licence.
+Copyright (C) 2026 Haneef Moheb
+
+Nyxa is open source under the GNU Affero General Public License v3 or later (see LICENSE). You can use, change, share and even sell it, as long as you share your full code under the same licence. foliate-js keeps its own MIT licence.
+
+Additional terms (AGPL section 7):
+
+- (b) Any copy or changed version of Nyxa must show "Based on Nyxa by Haneef Moheb (github.com/bobbysoony/Nyxa)" in its About or credits screen.
+- (e) This licence doesn't let you use the name Nyxa or its logo. Changed versions must use a different name.
 
