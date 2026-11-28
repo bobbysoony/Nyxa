@@ -1,4 +1,4 @@
-import type { TocItem } from "./foliate";
+import type { TocItem } from "../../foliate";
 import "./Contents.css";
 
 type ContentsProps = {

@@ -2,7 +2,7 @@ import { BaseDirectory, exists, mkdir, readDir, readFile, remove, writeFile } fr
 import { load } from "@tauri-apps/plugin-store";
 import { makeBook } from "../../foliate-js/view.js";
 import type { FoliateBook } from "../foliate";
-import { getTitle } from "../getTitle";
+import { getTitle } from "./getTitle";
 import { bookKey, fingerprint, type Bytes } from "./bookKey";
 import { sources } from "../sources";
 import { downloadCover, saveCover } from "./covers";

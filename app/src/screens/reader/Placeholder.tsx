@@ -1,4 +1,4 @@
-import type { Settings } from "./settings";
+import type { Settings } from "../../settings";
 import "./Placeholder.css";
 
 // How wide each grey line is, in %. Three paragraphs, each ending on a shorter line like real text

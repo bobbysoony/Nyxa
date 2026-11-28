@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { readFile } from "@tauri-apps/plugin-fs";
-import { listBooks, listNovels } from "./library/db";
-import { addBook, moveOldBooks, prepareBooks, refreshCovers } from "./library/books";
-import { coverLink } from "./library/covers";
-import { continueReading, listTiles, searchTiles, sortTiles, type Sort, type Tile } from "./library/shelf";
-import { lists, toList, type List } from "./library/lists";
-import Dropdown from "./Dropdown";
-import Tick from "./Tick";
+import { listBooks, listNovels } from "../../library/db";
+import { addBook, moveOldBooks, prepareBooks, refreshCovers } from "../../library/books";
+import { coverLink } from "../../library/covers";
+import { continueReading, listTiles, searchTiles, sortTiles, type Sort, type Tile } from "../../library/shelf";
+import { lists, toList, type List } from "../../library/lists";
+import Dropdown from "../../components/Dropdown";
+import Tick from "../../components/Tick";
 import "./Library.css";
 
 type LibraryProps = {

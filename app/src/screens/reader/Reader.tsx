@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { load } from "@tauri-apps/plugin-store";
-import "../foliate-js/view.js";
+import "../../../foliate-js/view.js";
 import SettingsPanel from "./SettingsPanel";
-import { makeBookCSS, Settings } from "./settings";
-import { getTitle } from "./getTitle";
+import { makeBookCSS, Settings } from "../../settings";
+import { getTitle } from "../../library/getTitle";
 import { tapAction } from "./taps";
-import type { FoliateBook, FoliateView, RelocateDetail } from "./foliate";
-import { makeNovelBook, type NovelBook } from "./library/novelBook";
+import type { FoliateBook, FoliateView, RelocateDetail } from "../../foliate";
+import { makeNovelBook, type NovelBook } from "../../library/novelBook";
 import Contents from "./Contents.tsx";
 import {
   getNovel,
@@ -17,16 +17,16 @@ import {
   setChapterRead,
   markBookOpened,
   markNovelOpened,
-} from "./library/db";
-import { loadBook, tocHrefs } from "./library/books";
-import { chapterFromHref, paragraphAt, positionHref } from "./library/position";
-import { finishedChapter } from "./library/finished";
-import { timeLeft, wordsLeft } from "./library/timeleft";
-import { applySwaps, curlyPage, hideMyFilters, tidy } from "./library/clean";
-import { chapterName } from "./library/chapterName";
+} from "../../library/db";
+import { loadBook, tocHrefs } from "../../library/books";
+import { chapterFromHref, paragraphAt, positionHref } from "../../library/position";
+import { finishedChapter } from "../../library/finished";
+import { timeLeft, wordsLeft } from "../../library/timeleft";
+import { applySwaps, curlyPage, hideMyFilters, tidy } from "../../library/clean";
+import { chapterName } from "../../library/chapterName";
 import FixBar from "./FixBar";
-import Confirm from "./Confirm";
-import Icon from "./Icon";
+import Confirm from "../../components/Confirm";
+import Icon from "../../components/Icon";
 import Placeholder from "./Placeholder";
 import "./Reader.css";
 

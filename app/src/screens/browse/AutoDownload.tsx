@@ -1,5 +1,5 @@
 import { useState } from "react";
-import Tick from "./Tick";
+import Tick from "../../components/Tick";
 import "./AutoDownload.css";
 
 type AutoDownloadProps = {

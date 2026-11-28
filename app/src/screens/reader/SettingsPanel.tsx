@@ -1,9 +1,9 @@
-import { resetLook, Settings, themes } from "./settings";
+import { resetLook, Settings, themes } from "../../settings";
 import { useEffect, useState } from "react";
 import { getVersion } from "@tauri-apps/api/app";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import Dropdown from "./Dropdown";
-import Tick from "./Tick";
+import Dropdown from "../../components/Dropdown";
+import Tick from "../../components/Tick";
 import "./SettingsPanel.css";
 
 const feedbackForm = "https://docs.google.com/forms/d/e/1FAIpQLSeja2ymZtDo_tCi4P2g4_c4NjahdpdU1B3YhD85WibXniqqzg/viewform?usp=pp_url&entry.1358451065=";

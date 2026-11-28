@@ -1,5 +1,5 @@
 import { useState } from "react";
-import Dropdown from "./Dropdown";
+import Dropdown from "../../components/Dropdown";
 import "./FixBar.css";
 
 type FixBarProps = {

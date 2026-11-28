@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { sources } from "./sources";
-import type { NovelItem, SourceNovel } from "./sources/types";
-import { queueChapters } from "./library/download";
+import { sources } from "../../sources";
+import type { NovelItem, SourceNovel } from "../../sources/types";
+import { queueChapters } from "../../library/download";
 import {
   getChapters,
   listNovels,
@@ -11,12 +11,12 @@ import {
   saveNovelList,
   setAllRead,
   type LibraryRow,
-} from "./library/db";
+} from "../../library/db";
 import ReadChapters, { type ReadChoice } from "./ReadChapters";
-import { lists, toList, type List } from "./library/lists";
-import { statusLabel, toStatus } from "./library/status";
-import Dropdown from "./Dropdown";
-import { downloadCover } from "./library/covers";
+import { lists, toList, type List } from "../../library/lists";
+import { statusLabel, toStatus } from "../../library/status";
+import Dropdown from "../../components/Dropdown";
+import { downloadCover } from "../../library/covers";
 import AutoDownload from "./AutoDownload";
 import "./Browse.css";
 

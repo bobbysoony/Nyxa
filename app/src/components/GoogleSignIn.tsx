@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { cancelSignIn, currentAccount, googleReady, signInWithGoogle, SignInError, signOut } from "./sync/google";
+import { cancelSignIn, currentAccount, googleReady, signInWithGoogle, SignInError, signOut } from "../sync/google";
 import "./GoogleSignIn.css";
 
 function GoogleSignIn() {

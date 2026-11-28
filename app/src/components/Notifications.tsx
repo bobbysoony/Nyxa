@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { listNovels, saveNovelList, setBackFromHiatus, type LibraryRow } from "./library/db";
-import type { List } from "./library/lists";
+import { listNovels, saveNovelList, setBackFromHiatus, type LibraryRow } from "../library/db";
+import type { List } from "../library/lists";
 import "./Notifications.css";
 
 type NotificationsProps = {
