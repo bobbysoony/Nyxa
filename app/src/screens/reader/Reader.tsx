@@ -329,7 +329,10 @@ function Reader({ settings, onSettingsChange, novelId, bookId, onShowNovel }: Re
       applyMyFixes(doc);
       // some EPUBs only put the chapter name in Contents, so show it at the top. An attribute, not a new tag,
       // so saved places that count the page's tags still point at the same spot
-      if (!doc.body.querySelector("h1, h2, h3, h4, h5, h6")) doc.body.dataset.title = chapterName(view.book, e.detail.index);
+      // some put it in a styled <p> instead of a heading, so skip it if the text already starts with the name
+      const name = chapterName(view.book, e.detail.index);
+      const startsWithName = tidy(doc.body.textContent ?? "").toLowerCase().startsWith(tidy(name).toLowerCase());
+      if (!doc.body.querySelector("h1, h2, h3, h4, h5, h6") && !startsWithName) doc.body.dataset.title = name;
       doc.addEventListener("keydown", handleKey);
       doc.addEventListener("click", (ev) => handleBookClick(ev, doc));
       doc.addEventListener("selectionchange", () => {

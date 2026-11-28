@@ -1,10 +1,17 @@
 import { useState } from "react";
 import Icon from "./Icon";
 import GoogleSignIn from "./GoogleSignIn";
+import DriveSync from "./DriveSync";
+import { Settings } from "../settings";
 import "./AccountMenu.css";
 
+type AccountMenuProps = {
+  settings: Settings;
+  onSettingsChange: (settings: Settings) => void;
+};
+
 // The profile icon at the top right, pressing it opens a small menu with your account stuff in it
-function AccountMenu() {
+function AccountMenu({ settings, onSettingsChange }: AccountMenuProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -18,7 +25,9 @@ function AccountMenu() {
         <div className="settings-panel">
           <strong>Account</strong>
           <span className="sync-note">You don't need one to use Nyxa, it's just for syncing your reading between devices</span>
-          <GoogleSignIn />
+          <GoogleSignIn>
+            <DriveSync settings={settings} onSettingsChange={onSettingsChange} />
+          </GoogleSignIn>
         </div>
       )}
     </div>

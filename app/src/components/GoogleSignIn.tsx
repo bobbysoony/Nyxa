@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 import { cancelSignIn, currentAccount, googleReady, signInWithGoogle, SignInError, signOut } from "../sync/google";
 import "./GoogleSignIn.css";
 
-function GoogleSignIn() {
+// children only show while you're signed in, the account menu puts the Drive buttons there
+function GoogleSignIn({ children }: { children?: ReactNode }) {
   const [account, setAccount] = useState(currentAccount());
   const [waiting, setWaiting] = useState(false);
   const [error, setError] = useState("");
@@ -36,6 +37,7 @@ function GoogleSignIn() {
           >
             Sign out
           </button>
+          {children}
         </>
       ) : (
         <>

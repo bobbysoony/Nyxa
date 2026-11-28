@@ -136,7 +136,7 @@ function App() {
           Notifications{notices ? ` (${notices})` : ""}
         </button>
       </nav>
-      <AccountMenu />
+      <AccountMenu settings={settings} onSettingsChange={changeSettings} />
       <DownloadBar />
       {import.meta.env.DEV && <Fps />}
       {place.screen === "library" && <Library onReadNovel={readNovel} onReadBook={readBook} found={check?.found ?? 0} />}
