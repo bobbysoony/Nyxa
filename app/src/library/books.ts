@@ -4,10 +4,8 @@ import { makeBook } from "../../foliate-js/view.js";
 import type { FoliateBook } from "../foliate";
 import { getTitle } from "./getTitle";
 import { bookKey, fingerprint, type Bytes } from "./bookKey";
-import { sources } from "../sources";
-import { downloadCover, saveCover } from "./covers";
-import { sleep } from "./download";
-import { getBook, getBookByKey, listBooks, listNovels, saveBook, saveBookChapters, saveBookPosition, saveBookRead } from "./db";
+import { saveCover } from "./covers";
+import { getBook, getBookByKey, listBooks, saveBook, saveBookChapters, saveBookPosition, saveBookRead } from "./db";
 
 const appData = { baseDir: BaseDirectory.AppData };
 
@@ -66,18 +64,8 @@ export async function prepareBooks() {
 
 // The library's Refresh button: asks each novel's site for its cover again, and pulls the
 // cover out of any EPUB that doesn't have one. One novel at a time, like the update check.
-export async function refreshCovers() {
-  for (const novel of await listNovels()) {
-    try {
-      const source = sources.find((s) => s.id === novel.source);
-      if (!source) continue;
-      const site = await source.parseNovel(novel.path);
-      if (site.cover) await downloadCover(`novel-${novel.id}`, site.cover);
-    } catch (err) {
-      console.error(`Couldn't refresh ${novel.name}`, err);
-    }
-    await sleep(500);
-  }
+// EPUB covers that are missing. Web novel covers come with the update check on Refresh (checkForUpdates)
+export async function refreshBookCovers() {
   for (const row of await listBooks()) {
     if (await exists(`covers/book-${row.id}.jpg`, appData)) continue;
     try {

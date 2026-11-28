@@ -4,6 +4,7 @@ import { getChapters, listNovels, moveIfFinished, saveChapterList, saveNovelStat
 import { cameOffHiatus, toStatus } from "./status";
 import { toList } from "./lists";
 import { queueChapters, sleep } from "./download";
+import { downloadCover } from "./covers";
 
 // The chapters on the site that Nyxa doesn't have yet, in the site's order.
 // A chapter is known by its path, because names can change ("Chapter 12" → "Chapter 12: The Spire").
@@ -18,7 +19,8 @@ let running = false;
 
 // Asks each novel's site for its chapter list and saves the chapters Nyxa didn't have.
 // One novel at a time, with a short pause between, so no site gets a burst of requests.
-export async function checkForUpdates(onProgress: (check: Check) => void) {
+// covers = also save each cover from the same page (the Library's Refresh), so it's one trip per novel, not two
+export async function checkForUpdates(onProgress: (check: Check) => void, covers = false) {
   if (running) return; // already checking (React runs effects twice in development)
   running = true;
   try {
@@ -30,6 +32,8 @@ export async function checkForUpdates(onProgress: (check: Check) => void) {
         const source = sources.find((s) => s.id === novel.source);
         if (!source) throw new Error(`no source called ${novel.source} on this device`);
         const site = await source.parseNovel(novel.path);
+        // a cover that won't download shouldn't count as a failed check, the chapters are what matter
+        if (covers && site.cover) await downloadCover(`novel-${novel.id}`, site.cover).catch(console.error);
         const chapters = await getChapters(novel.id);
         const found = newChapters(chapters.map((c) => c.path), site.chapters ?? []);
         // New chapters go after the last one Nyxa has.

@@ -157,7 +157,7 @@ function App() {
       <DownloadBar />
       <SyncBar />
       {import.meta.env.DEV && <Fps />}
-      {place.screen === "library" && <Library onReadNovel={readNovel} onReadBook={readBook} found={check?.found ?? 0} />}
+      {place.screen === "library" && <Library onReadNovel={readNovel} onReadBook={readBook} found={check?.found ?? 0} onCheck={() => checkForUpdates(setCheck, true)} />}
       {place.screen === "reader" && (
         <Reader
           settings={settings}

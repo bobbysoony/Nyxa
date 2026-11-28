@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { readFile } from "@tauri-apps/plugin-fs";
-import { listBooks, listNovels } from "../../library/db";
-import { addBook, moveOldBooks, prepareBooks, refreshCovers } from "../../library/books";
+import { listBooks, listNovels, tickChaptersBeforePlaces } from "../../library/db";
+import { syncNow, watchSync } from "../../sync/sync";
+import { addBook, moveOldBooks, prepareBooks, refreshBookCovers } from "../../library/books";
 import { coverLink } from "../../library/covers";
 import { continueReading, listTiles, searchTiles, sortTiles, type Sort, type Tile } from "../../library/shelf";
 import { lists, toList, type List } from "../../library/lists";
@@ -14,6 +15,7 @@ type LibraryProps = {
   onReadNovel: (id: number) => void;
   onReadBook: (id: number) => void;
   found: number;
+  onCheck: () => Promise<unknown>;
 };
 
 function progressText(read: number, total: number) {
@@ -53,7 +55,7 @@ function TileButton({ tile }: { tile: Tile }) {
   );
 }
 
-function Library({ onReadNovel, onReadBook, found }: LibraryProps) {
+function Library({ onReadNovel, onReadBook, found, onCheck }: LibraryProps) {
   const [tiles, setTiles] = useState<Tile[] | null>(null);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<Sort>("title");
@@ -72,9 +74,24 @@ function Library({ onReadNovel, onReadBook, found }: LibraryProps) {
     return () => links.forEach((link) => URL.revokeObjectURL(link));
   }, [found, reload]);
 
+  // a sync in the background (another device's place, or Go on the sync bar) redraws the covers here too
+  useEffect(() => watchSync(() => setReload((n) => n + 1)), []);
+
+  // Makes this device match your other one. The sync and read ticks are instant, so the tiles update
+  // straight away. Then the slow part, one trip to each novel's site for new chapters and its cover,
+  // and the ticks again after, for any new chapters that came in below your place
   async function refresh() {
     setRefreshing(true);
-    await refreshCovers();
+    try {
+      await syncNow();
+      await tickChaptersBeforePlaces();
+      setReload((n) => n + 1);
+      await onCheck();
+      await tickChaptersBeforePlaces();
+      await refreshBookCovers();
+    } catch (err) {
+      console.error(err);
+    }
     setRefreshing(false);
     setReload((n) => n + 1);
   }
