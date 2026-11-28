@@ -19,6 +19,10 @@ function further(a: NovelPlace, b: NovelPlace) {
   return a.chapter > b.chapter || (a.chapter === b.chapter && a.paragraph > b.paragraph);
 }
 
+// This device moved within 5 minutes of the other one's place: you just switched devices and
+// scrolled before the sync landed, so the other device's further place wins without asking
+const SWITCH_GAP = 5 * 60 * 1000;
+
 // Newest wins, one novel at a time. take = the ones this device should copy,
 // file = what goes back in Drive, which keeps novels this device doesn't have so they aren't lost.
 // ahead = the other device is further along but older, like a PC you touched before it synced.
@@ -30,8 +34,10 @@ export function mergePlaces(mine: NovelPlace[], theirs: NovelPlace[], keepMine =
   for (const place of mine) {
     const other = file.get(keyOf(place));
     if (other && other.changedAt > place.changedAt) take.push(other);
-    else if (other && other.changedAt < place.changedAt && further(other, place) && !keepMine.has(keyOf(place))) ahead.push(other);
-    else file.set(keyOf(place), place);
+    else if (other && other.changedAt < place.changedAt && further(other, place) && !keepMine.has(keyOf(place))) {
+      if (place.changedAt - other.changedAt < SWITCH_GAP) take.push(other);
+      else ahead.push(other);
+    } else file.set(keyOf(place), place);
   }
   return { take, ahead, file: [...file.values()] };
 }
