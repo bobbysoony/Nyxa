@@ -94,7 +94,6 @@ export async function accessToken(fresh = false) {
   return account.accessToken;
 }
 
-
 // Thrown for problems the user can understand, so the button can show the message as it is
 export class SignInError extends Error {}
 

@@ -8,7 +8,8 @@ export function hasTitleAlready(firstParagraph: string, name: string) {
   const text = tidy(firstParagraph.slice(0, 200)).toLowerCase(); // only the start matters, no need to tidy a whole chapter
   const title = tidy(name).toLowerCase();
   if (title === "" || text === title) return true;
-  return title.includes(" ") && text.startsWith(title) && !/[\p{L}\p{N}]/u.test(text.charAt(title.length)); // letter or digit next means it's a different word or number ("Chapter 12")
+  // a letter or digit right after the name means it's a different word or number ("Chapter 12")
+  return title.includes(" ") && text.startsWith(title) && !/[\p{L}\p{N}]/u.test(text.charAt(title.length));
 }
 
 // A chapter's name from the Contents list, for chapters whose page doesn't show one
